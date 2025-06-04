@@ -22,7 +22,7 @@ func ReadAppInfo(file io.ReadSeeker, offsets *OffsetsUint32) (*AppInfo, error) {
 	appinfo := &AppInfo{}
 
 	// Jump to start address
-	if _, err := file.Seek(int64(offsets.Start), io.SeekStart); err != nil {
+	if _, err := file.Seek(offsets.Start, io.SeekStart); err != nil {
 		return nil, fmt.Errorf("failed to seek to start address: %w\n", err)
 	}
 

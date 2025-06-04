@@ -21,7 +21,7 @@ func ReadExtensions(file io.ReadSeeker, offsets *OffsetsUint32) (extensions *Ext
 	extensions = &Extensions{}
 
 	// Jump to start address
-	if _, err := file.Seek(int64(offsets.Start), io.SeekStart); err != nil {
+	if _, err := file.Seek(offsets.Start, io.SeekStart); err != nil {
 		return nil, fmt.Errorf("failed to seek to start address: %w\n", err)
 	}
 
@@ -46,7 +46,7 @@ func ReadExtensions(file io.ReadSeeker, offsets *OffsetsUint32) (extensions *Ext
 }
 
 func (extensions *Extensions) Print() {
-	fmt.Println("Extensions:")
+	PadPrintln(0, "Extensions:")
 	PadPrintln(2, "Extensions MetaData:")
 	extensions.MetaData.Print()
 	PadPrintln(2, "---")

@@ -19,20 +19,23 @@ func ReadPlayList(file io.ReadSeeker, offsets *OffsetsUint32) (playlist *PlayLis
 	playlist = &PlayList{}
 
 	// Jump to start address
-	if _, err := file.Seek(int64(offsets.Start), io.SeekStart); err != nil {
+	if _, err := file.Seek(offsets.Start, io.SeekStart); err != nil {
 		return nil, fmt.Errorf("failed to seek to start address: %w\n", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &playlist.Length); err != nil {
 		return nil, fmt.Errorf("failed to read playlist.Length: %v", err)
 	}
+
 	// Skip past reserve space between Length and NumberOfPlayItems
 	if _, err := file.Seek(2, io.SeekCurrent); err != nil {
 		return nil, fmt.Errorf("failed to seek past playlist reserve space: %v", err)
 	}
+
 	if err := binary.Read(file, binary.BigEndian, &playlist.NumberOfPlayItems); err != nil {
 		return nil, fmt.Errorf("failed to read playlist.NumberOfPlayItems: %v", err)
 	}
+
 	if err := binary.Read(file, binary.BigEndian, &playlist.NumberOfSubPaths); err != nil {
 		return nil, fmt.Errorf("failed to read playlist.NumberOfSubPaths: %v", err)
 	}

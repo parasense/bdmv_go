@@ -74,11 +74,12 @@ func ReadExtensionEntryData(file io.ReadSeeker, metaData *ExtensionEntryMetaData
 	// Unknown extension.
 	default:
 
-		fmt.Println("DEBUG: Unknown extension")
+		fmt.Printf("DEBUG: unknown extension: [id1: %d] [id2: %d].\n\n", metaData.ExtDataType, metaData.ExtDataVersion)
 
 		// NOT YET, skip!
 		fmt.Println("DEBUG: SKIPPING unknown extension")
 		file.Seek(int64(metaData.ExtDataLength), io.SeekCurrent)
-		return nil, fmt.Errorf("Error: unknown extension.")
+		//return nil, fmt.Errorf("Error: unknown extension.")
+		return nil, nil
 	}
 }

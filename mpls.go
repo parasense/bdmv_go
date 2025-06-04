@@ -100,8 +100,10 @@ func ParseMPLS(filePath string) (
 	}
 
 	// Extensions
-	if extensiondata, err = ReadExtensions(file, &header.Extensions); err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("failed to read Extension Data: %w", err)
+	if header.Extensions.Start != 0 && header.Extensions.Stop != 0 {
+		if extensiondata, err = ReadExtensions(file, &header.Extensions); err != nil {
+			return nil, nil, nil, nil, nil, fmt.Errorf("failed to read Extension Data: %w", err)
+		}
 	}
 
 	return header, appinfo, playlist, chapterMarks, extensiondata, nil
@@ -120,11 +122,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	//fmt.Printf("MPLS File: %s\n", mplsPath)
 	PadPrintf(0, "MPLS File: %s\n", mplsPath)
 	header.Print()
 	appinfo.Print()
 	playlist.Print()
 	chapterMarks.Print()
-	extData.Print()
+	if header.Extensions.Start != 0 && header.Extensions.Stop != 0 {
+		extData.Print()
+	}
 }

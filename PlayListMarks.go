@@ -27,7 +27,7 @@ func ReadMarks(file io.ReadSeeker, offsets *OffsetsUint32) (marks *PlaylistMarks
 	marks = &PlaylistMarks{}
 
 	// Jump to start address
-	if _, err := file.Seek(int64(offsets.Start), io.SeekStart); err != nil {
+	if _, err := file.Seek(offsets.Start, io.SeekStart); err != nil {
 		return nil, fmt.Errorf("failed to seek to start address: %w\n", err)
 	}
 

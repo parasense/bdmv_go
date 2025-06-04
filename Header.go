@@ -20,17 +20,16 @@ type MPLSHeader struct {
 // Because they are used in io.Seeker which only uses int64
 type OffsetsUint32 struct {
 	Start,
-	Stop uint32
+	Stop int64
 }
 
 func ReadMPLSHeader(file io.ReadSeeker) (header *MPLSHeader, err error) {
 	header = &MPLSHeader{}
 
-	var eoftmp int64
-	if eoftmp, err = file.Seek(0, io.SeekEnd); err != nil {
+	var eof int64
+	if eof, err = file.Seek(0, io.SeekEnd); err != nil {
 		return nil, fmt.Errorf("failed to seek to file end address: %v", err)
 	}
-	eof := uint32(eoftmp)
 
 	if _, err := file.Seek(0, io.SeekStart); err != nil {
 		return nil, fmt.Errorf("failed to seek to file start address: %v", err)
@@ -44,28 +43,33 @@ func ReadMPLSHeader(file io.ReadSeeker) (header *MPLSHeader, err error) {
 		return nil, fmt.Errorf("failed to read header.VersionNumber: %v", err)
 	}
 
-	if err := binary.Read(file, binary.BigEndian, &header.Playlist.Start); err != nil {
+	var buffer uint32
+	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
 		return nil, fmt.Errorf("failed to read header.Playlist.start: %v", err)
 	}
 
 	header.AppInfo.Start = 40
-	header.AppInfo.Stop = header.Playlist.Start
+	header.AppInfo.Stop = int64(buffer)
+	header.Playlist.Start = header.AppInfo.Stop
 
-	if err := binary.Read(file, binary.BigEndian, &header.Marks.Start); err != nil {
+	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
 		return nil, fmt.Errorf("failed to read header.Marks.start: %v", err)
 	}
 
-	header.Playlist.Stop = header.Marks.Start
+	header.Playlist.Stop = int64(buffer)
+	header.Marks.Start = header.Playlist.Stop
 
-	if err := binary.Read(file, binary.BigEndian, &header.Extensions.Start); err != nil {
-		return nil, fmt.Errorf("failed to read header.ExtensionStartAddress: %v", err)
+	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
+		return nil, fmt.Errorf("failed to read header.Extensions.Start: %v", err)
 	}
 
-	if header.Extensions.Start == 0 {
+	if buffer == 0 {
 		header.Marks.Stop = eof
+		header.Extensions.Start = 0
 		header.Extensions.Stop = 0
 	} else {
-		header.Marks.Stop = header.Extensions.Start
+		header.Marks.Stop = int64(buffer)
+		header.Extensions.Start = header.Marks.Stop
 		header.Extensions.Stop = eof
 	}
 
