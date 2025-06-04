@@ -18,11 +18,16 @@ type AppInfo struct {
 	SDRConversionNotificationFlag bool
 }
 
-func ReadAppInfo(file io.ReadSeeker) (*AppInfo, error) {
+func ReadAppInfo(file io.ReadSeeker, offsets *OffsetsUint32) (*AppInfo, error) {
 	appinfo := &AppInfo{}
 
+	// Jump to start address
+	if _, err := file.Seek(int64(offsets.Start), io.SeekStart); err != nil {
+		return nil, fmt.Errorf("failed to seek to start address: %w\n", err)
+	}
+
 	if err := binary.Read(file, binary.BigEndian, &appinfo.Length); err != nil {
-		return nil, fmt.Errorf("failed to read appinfo.Length: %v", err)
+		return nil, fmt.Errorf("failed to read appinfo.Length: %w", err)
 	}
 
 	// Reserve space 1 byte.

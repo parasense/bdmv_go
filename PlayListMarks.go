@@ -23,8 +23,13 @@ type MarkEntry struct {
 	Duration        uint32 // in 45kHz ticks
 }
 
-func ReadMarks(file io.ReadSeeker) (marks *PlaylistMarks, err error) {
+func ReadMarks(file io.ReadSeeker, offsets *OffsetsUint32) (marks *PlaylistMarks, err error) {
 	marks = &PlaylistMarks{}
+
+	// Jump to start address
+	if _, err := file.Seek(int64(offsets.Start), io.SeekStart); err != nil {
+		return nil, fmt.Errorf("failed to seek to start address: %w\n", err)
+	}
 
 	if err := binary.Read(file, binary.BigEndian, &marks.Length); err != nil {
 		return nil, fmt.Errorf("failed to read mark length: %v\n", err)

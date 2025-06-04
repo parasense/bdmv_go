@@ -55,13 +55,6 @@ func Convert45KhzTimeToSeconds(timestamp uint32) uint32 {
 	return uint32(timestamp / 45000)
 }
 
-func indent(nSpaces uint8) (pad string) {
-	for i := uint8(0); i < nSpaces; i++ {
-		pad += " "
-	}
-	return
-}
-
 func PadPrintf(indent int, format string, args ...any) {
 	fmt.Printf(strings.Repeat(" ", indent)+format, args...)
 }
@@ -72,58 +65,43 @@ func PadPrintln(indent int, args ...any) {
 }
 
 // ParseMPLS parses an MPLS file and returns the playlist details
-// func ParseMPLS(filePath string) (*MPLSHeader, *AppInfo, *PlayList, *PlaylistMarks, *ExtensionsMetaData, error) {
-func ParseMPLS(filePath string) (*MPLSHeader, *AppInfo, *PlayList, *PlaylistMarks, *Extensions, error) {
+func ParseMPLS(filePath string) (
+	header *MPLSHeader,
+	appinfo *AppInfo,
+	playlist *PlayList,
+	chapterMarks *PlaylistMarks,
+	extensiondata *Extensions,
+	err error,
+) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("failed to open file: %v\n", err)
+		return nil, nil, nil, nil, nil, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
 
-	// Call the header function.
-	header, err := ReadMPLSHeader(file)
-	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("failed to read header: %v\n", err)
+	// Header
+	if header, err = ReadMPLSHeader(file); err != nil {
+		return nil, nil, nil, nil, nil, fmt.Errorf("failed to read header: %w", err)
 	}
 
-	// Jump to AppInfo start address
-	if _, err := file.Seek(int64(header.AppInfoStartAddress), io.SeekStart); err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("failed to seek to AppInfo: %v\n", err)
-	}
-	appinfo, err := ReadAppInfo(file)
-	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("failed to read appinfo: %v\n", err)
+	// AppInfo
+	if appinfo, err = ReadAppInfo(file, &header.AppInfo); err != nil {
+		return nil, nil, nil, nil, nil, fmt.Errorf("failed to read appinfo: %w", err)
 	}
 
-	// Jump to playlist start address
-	if _, err := file.Seek(int64(header.PlayListStartAddress), io.SeekStart); err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("failed to seek to playlist: %v\n", err)
+	// Playlist
+	if playlist, err = ReadPlayList(file, &header.Playlist); err != nil {
+		return nil, nil, nil, nil, nil, fmt.Errorf("failed to read PlayList: %w", err)
 	}
 
-	playlist, err := ReadPlayList(file)
-	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("failed to read PlayList: %v\n", err)
+	// Marks
+	if chapterMarks, err = ReadMarks(file, &header.Marks); err != nil {
+		return nil, nil, nil, nil, nil, fmt.Errorf("failed to read Chapter Marks: %w", err)
 	}
 
-	// Jump to playlist chapter mark start address
-	if _, err := file.Seek(int64(header.PlayListMarkStartAddress), io.SeekStart); err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("failed to seek to playlist marks: %v\n", err)
-	}
-
-	chapterMarks, err := ReadMarks(file)
-	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("failed to read Chapter Marks: %v\n", err)
-	}
-
-	// Jump to extension data start address
-	if _, err := file.Seek(int64(header.ExtensionStartAddress), io.SeekStart); err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("failed to seek to playlist extension data: %v\n", err)
-	}
-
-	//extensiondata, err := ReadExtMetaData(file)
-	extensiondata, err := ReadExtensions(file)
-	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("failed to read Extension Data: %v\n", err)
+	// Extensions
+	if extensiondata, err = ReadExtensions(file, &header.Extensions); err != nil {
+		return nil, nil, nil, nil, nil, fmt.Errorf("failed to read Extension Data: %w", err)
 	}
 
 	return header, appinfo, playlist, chapterMarks, extensiondata, nil
@@ -138,7 +116,7 @@ func main() {
 	mplsPath := os.Args[1]
 	header, appinfo, playlist, chapterMarks, extData, err := ParseMPLS(mplsPath)
 	if err != nil {
-		fmt.Printf("Error parsing MPLS file: %v\n", err)
+		fmt.Errorf("Error parsing MPLS file: %w\n", err)
 		os.Exit(1)
 	}
 
@@ -149,5 +127,4 @@ func main() {
 	playlist.Print()
 	chapterMarks.Print()
 	extData.Print()
-
 }

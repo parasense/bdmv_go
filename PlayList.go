@@ -15,8 +15,14 @@ type PlayList struct {
 	SubPaths          []*SubPath
 }
 
-func ReadPlayList(file io.ReadSeeker) (playlist *PlayList, err error) {
+func ReadPlayList(file io.ReadSeeker, offsets *OffsetsUint32) (playlist *PlayList, err error) {
 	playlist = &PlayList{}
+
+	// Jump to start address
+	if _, err := file.Seek(int64(offsets.Start), io.SeekStart); err != nil {
+		return nil, fmt.Errorf("failed to seek to start address: %w\n", err)
+	}
+
 	if err := binary.Read(file, binary.BigEndian, &playlist.Length); err != nil {
 		return nil, fmt.Errorf("failed to read playlist.Length: %v", err)
 	}

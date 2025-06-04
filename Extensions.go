@@ -17,8 +17,13 @@ type Extensions struct {
 	EntryData     []ExtensionEntryData
 }
 
-func ReadExtensions(file io.ReadSeeker) (extensions *Extensions, err error) {
+func ReadExtensions(file io.ReadSeeker, offsets *OffsetsUint32) (extensions *Extensions, err error) {
 	extensions = &Extensions{}
+
+	// Jump to start address
+	if _, err := file.Seek(int64(offsets.Start), io.SeekStart); err != nil {
+		return nil, fmt.Errorf("failed to seek to start address: %w\n", err)
+	}
 
 	// Read the metadata about the extensions
 	// 12-bytes total
