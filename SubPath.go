@@ -1,5 +1,18 @@
 package main
 
+/*
+Dev Notes:
+
+While testing a particular bluray title: Never Ending Story (1984).
+It was throwing an error, because apparently that title pads SubPlayItems.
+That was strange, until then no other test title did that!
+
+There was exactly 1-byte of zero fill padding at the end, causing alignment havok.
+So Please note that apparently it is allowed to have padding here.
+Documentation is scarce, but I've seen no indication this allows padding reserve space.
+IT DOES ALLOW FOR ARBITRARY PADDING or RESERVE SPACE.
+*/
+
 import (
 	"encoding/binary"
 	"fmt"
@@ -19,6 +32,11 @@ func ReadSubPath(file io.ReadSeeker) (subPath *SubPath, err error) {
 
 	if err := binary.Read(file, binary.BigEndian, &subPath.Length); err != nil {
 		return nil, fmt.Errorf("failed to read stream info length: %v\n", err)
+	}
+
+	end, err := CalculateEndOffset(file, subPath.Length)
+	if err != nil {
+		return nil, err
 	}
 
 	// Skip 1-byte reserve space
@@ -56,6 +74,11 @@ func ReadSubPath(file io.ReadSeeker) (subPath *SubPath, err error) {
 		if subPath.SubPlayItems[i], err = ReadSubPlayItem(file); err != nil {
 			return nil, fmt.Errorf("failed to read SubPlayItem: %v\n", err)
 		}
+	}
+
+	// Skip to the end
+	if _, err = file.Seek(end, io.SeekStart); err != nil {
+		return nil, fmt.Errorf("failed to seek end offset: %v\n", err)
 	}
 
 	return subPath, nil

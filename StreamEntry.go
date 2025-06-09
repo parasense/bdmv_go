@@ -14,6 +14,13 @@ type BasicStreamEntry struct {
 	StreamType uint8
 }
 
+func (streamEntry *BasicStreamEntry) SetLength(length uint8) {
+	streamEntry.Length = length
+}
+func (streamEntry *BasicStreamEntry) SetStreamType(streamType uint8) {
+	streamEntry.StreamType = streamType
+}
+
 type StreamEntryTypeI struct {
 	BasicStreamEntry
 	RefToStreamPID uint16
@@ -35,52 +42,40 @@ type StreamEntryTypeIII struct {
 type StreamEntry interface {
 	Print()
 	Read(io.ReadSeeker) error
+	SetLength(uint8)
+	SetStreamType(uint8)
 }
 
 func ReadStreamEntry(file io.ReadSeeker) (entry StreamEntry, err error) {
 	var buffer byte
 
 	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
-		return nil, fmt.Errorf("failed to read Stream Entry Length: %v\n", err)
+		return nil, fmt.Errorf("Failed to read Stream Entry Length: %w", err)
 	}
 	var length uint8 = buffer
 
 	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
-		return nil, fmt.Errorf("failed to read Stream Entry StreamType: %v\n", err)
+		return nil, fmt.Errorf("Failed to read Stream Entry StreamType: %w", err)
 	}
 	var streamType uint8 = buffer
 
 	switch streamType {
 	case 1:
-		entry := &StreamEntryTypeI{}
-		entry.Length = length
-		entry.StreamType = streamType
-		if err := entry.Read(file); err != nil {
-			return nil, fmt.Errorf("failed calling entry.Read() on StreamEntry: %v\n", err)
-		}
-		return entry, nil
-
+		entry = &StreamEntryTypeI{}
 	case 2:
-		entry := &StreamEntryTypeII{}
-		entry.Length = length
-		entry.StreamType = streamType
-		if err := entry.Read(file); err != nil {
-			return nil, fmt.Errorf("failed calling entry.Read() on StreamEntry: %v\n", err)
-		}
-		return entry, nil
-
+		entry = &StreamEntryTypeII{}
 	case 3, 4:
-		entry := &StreamEntryTypeIII{}
-		entry.Length = length
-		entry.StreamType = streamType
-		if err := entry.Read(file); err != nil {
-			return nil, fmt.Errorf("failed calling entry.Read() on StreamEntry: %v\n", err)
-		}
-		return entry, nil
-
+		entry = &StreamEntryTypeIII{}
 	default:
-		return nil, fmt.Errorf("Unknown Stream Entry type\n")
+		return nil, fmt.Errorf("ReadStreamEntry(): Unknown Stream Entry type: %d", streamType)
 	}
+
+	entry.SetLength(length)
+	entry.SetStreamType(streamType)
+	if err := entry.Read(file); err != nil {
+		return nil, fmt.Errorf("Failed calling entry.Read() on StreamEntry (type %d): %w", streamType, err)
+	}
+	return entry, nil
 
 }
 
@@ -112,12 +107,12 @@ func (entry *StreamEntryTypeIII) Print() {
 func (entry *StreamEntryTypeI) Read(file io.ReadSeeker) (err error) {
 
 	if err := binary.Read(file, binary.BigEndian, &entry.RefToStreamPID); err != nil {
-		return fmt.Errorf("failed to read Stream Entry RefToStreamPID: %v\n", err)
+		return fmt.Errorf("failed to read Stream Entry RefToStreamPID: %w", err)
 	}
 
 	// 6 tail padding bytes
 	if _, err := file.Seek(6, io.SeekCurrent); err != nil {
-		return fmt.Errorf("failed to seek past reserve space: %v\n", err)
+		return fmt.Errorf("failed to seek past reserve space: %w", err)
 	}
 
 	return nil
@@ -126,20 +121,20 @@ func (entry *StreamEntryTypeI) Read(file io.ReadSeeker) (err error) {
 func (entry *StreamEntryTypeII) Read(file io.ReadSeeker) (err error) {
 
 	if err := binary.Read(file, binary.BigEndian, &entry.RefToSubPathID); err != nil {
-		return fmt.Errorf("failed to read stream Entry RefToSubPathID: %v\n", err)
+		return fmt.Errorf("failed to read stream Entry RefToSubPathID: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &entry.RefToSubClipID); err != nil {
-		return fmt.Errorf("failed to read stream Entry RefToSubClipID: %v\n", err)
+		return fmt.Errorf("failed to read stream Entry RefToSubClipID: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &entry.RefToStreamPID); err != nil {
-		return fmt.Errorf("failed to read stream Entry RefToStreamPID: %v\n", err)
+		return fmt.Errorf("failed to read stream Entry RefToStreamPID: %w", err)
 	}
 
 	// 4 tail padding bytes
 	if _, err := file.Seek(4, io.SeekCurrent); err != nil {
-		return fmt.Errorf("failed to seek past reserve space: %v\n", err)
+		return fmt.Errorf("failed to seek past reserve space: %w", err)
 	}
 
 	return nil
@@ -148,16 +143,16 @@ func (entry *StreamEntryTypeII) Read(file io.ReadSeeker) (err error) {
 func (entry *StreamEntryTypeIII) Read(file io.ReadSeeker) (err error) {
 
 	if err := binary.Read(file, binary.BigEndian, &entry.RefToSubPathID); err != nil {
-		return fmt.Errorf("failed to read stream Entry RefToSubPathID: %v\n", err)
+		return fmt.Errorf("failed to read stream Entry RefToSubPathID: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &entry.RefToStreamPID); err != nil {
-		return fmt.Errorf("failed to read stream Entry RefToStreamPID: %v\n", err)
+		return fmt.Errorf("failed to read stream Entry RefToStreamPID: %w", err)
 	}
 
 	// 5 tail padding bytes
 	if _, err := file.Seek(5, io.SeekCurrent); err != nil {
-		return fmt.Errorf("failed to seek past reserve space: %v\n", err)
+		return fmt.Errorf("failed to seek past reserve space: %w", err)
 	}
 
 	return nil

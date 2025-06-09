@@ -32,43 +32,43 @@ func ReadPlayItem(file io.ReadSeeker) (*PlayItem, error) {
 
 	playItem := &PlayItem{}
 	if err := binary.Read(file, binary.BigEndian, &playItem.Length); err != nil {
-		return nil, fmt.Errorf("failed to read play item length: %v", err)
+		return nil, fmt.Errorf("failed to read play item length: %w", err)
 	}
 
 	// The 5 bytes clip name
 	if err := binary.Read(file, binary.BigEndian, &playItem.ClipInformationFileName); err != nil {
-		return nil, fmt.Errorf("failed to read clip info filename: %v", err)
+		return nil, fmt.Errorf("failed to read clip info filename: %w", err)
 	}
 
 	// The 4 byte codec should be something like "M2TS"
 	if err := binary.Read(file, binary.BigEndian, &playItem.ClipCodecIdentifier); err != nil {
-		return nil, fmt.Errorf("failed to read clip codec identifier: %v", err)
+		return nil, fmt.Errorf("failed to read clip codec identifier: %w", err)
 	}
 
 	// skip 1 byte reserve space
 	if _, err := file.Seek(1, io.SeekCurrent); err != nil {
-		return nil, fmt.Errorf("failed to seek past reserve space: %v", err)
+		return nil, fmt.Errorf("failed to seek past reserve space: %w", err)
 	}
 
 	// Read 1 byte into a buffer to extract IsMultiAngle bit flag and ConnectionCondition 4 bit number
 	var flagBuffer uint8
 	if err := binary.Read(file, binary.BigEndian, &flagBuffer); err != nil {
-		return nil, fmt.Errorf("failed to read flagBuffer: %v", err)
+		return nil, fmt.Errorf("failed to read flagBuffer: %w", err)
 	}
 
 	playItem.IsMultiAngle = flagBuffer&0x10 != 0     // 0b00010000
 	playItem.ConnectionCondition = flagBuffer & 0x0F // 0b00001111
 
 	if err := binary.Read(file, binary.BigEndian, &playItem.RefToSTCID); err != nil {
-		return nil, fmt.Errorf("failed to read STC ID: %v", err)
+		return nil, fmt.Errorf("failed to read STC ID: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &playItem.INTime); err != nil {
-		return nil, fmt.Errorf("failed to read IN time: %v", err)
+		return nil, fmt.Errorf("failed to read IN time: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &playItem.OUTTime); err != nil {
-		return nil, fmt.Errorf("failed to read OUT time: %v", err)
+		return nil, fmt.Errorf("failed to read OUT time: %w", err)
 	}
 
 	var err error
@@ -76,18 +76,18 @@ func ReadPlayItem(file io.ReadSeeker) (*PlayItem, error) {
 	// This reads 8 bytes
 	playItem.UserOptions, err = ReadUserOptions(file)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read UserOptions: %v", err)
+		return nil, fmt.Errorf("failed to read UserOptions: %w", err)
 	}
 
 	// Read the random access flag (1 bit)
 	if err := binary.Read(file, binary.BigEndian, &flagBuffer); err != nil {
-		return nil, fmt.Errorf("failed to read flagBuffer: %v", err)
+		return nil, fmt.Errorf("failed to read flagBuffer: %w", err)
 	}
 	playItem.PlayItemRandomAccessFlag = flagBuffer&0x80 != 0
 
 	// Still mode 1 byte
 	if err := binary.Read(file, binary.BigEndian, &playItem.StillMode); err != nil {
-		return nil, fmt.Errorf("failed to read StillMode: %v", err)
+		return nil, fmt.Errorf("failed to read StillMode: %w", err)
 	}
 
 	// Read StillTime if StillMode enabled
@@ -95,13 +95,13 @@ func ReadPlayItem(file io.ReadSeeker) (*PlayItem, error) {
 
 		// Read two bytes of StillTime
 		if err := binary.Read(file, binary.BigEndian, &playItem.StillTime); err != nil {
-			return nil, fmt.Errorf("failed to read StillTime: %v", err)
+			return nil, fmt.Errorf("failed to read StillTime: %w", err)
 		}
 	} else {
 
 		// Else, Skip two bytes that would have been StillTime
 		if _, err := file.Seek(2, io.SeekCurrent); err != nil {
-			return nil, fmt.Errorf("failed to seek past reserve space: %v\n", err)
+			return nil, fmt.Errorf("failed to seek past reserve space: %w", err)
 		}
 	}
 
@@ -109,7 +109,7 @@ func ReadPlayItem(file io.ReadSeeker) (*PlayItem, error) {
 
 		// Read one byte of NumberOfAngles
 		if err := binary.Read(file, binary.BigEndian, &playItem.NumberOfAngles); err != nil {
-			return nil, fmt.Errorf("failed to read NumberOfAngles: %v", err)
+			return nil, fmt.Errorf("failed to read NumberOfAngles: %w", err)
 		}
 
 		// This is what libbluray does - no idea why.
@@ -119,7 +119,7 @@ func ReadPlayItem(file io.ReadSeeker) (*PlayItem, error) {
 
 		// Read the IsDifferentAudios & IsSeamlessAngleChange flags (1 bit each)
 		if err := binary.Read(file, binary.BigEndian, &flagBuffer); err != nil {
-			return nil, fmt.Errorf("failed to read flagBuffer: %v", err)
+			return nil, fmt.Errorf("failed to read flagBuffer: %w", err)
 		}
 		playItem.IsDifferentAudios = flagBuffer&0x02 != 0
 		playItem.IsSeamlessAngleChange = flagBuffer&0x01 != 0
@@ -139,14 +139,9 @@ func ReadPlayItem(file io.ReadSeeker) (*PlayItem, error) {
 
 	for i := uint8(1); i < playItem.NumberOfAngles; i++ {
 		if playItem.Angles[i], err = ReadPlayItemEntry(file); err != nil {
-			return nil, fmt.Errorf("failed to read PlayItemEntry: %v\n", err)
+			return nil, fmt.Errorf("failed to read PlayItemEntry: %w", err)
 		}
 	}
-
-	//// Read stream info
-	//if playItem.StreamInfo, err = ReadStreamInfo(file); err != nil {
-	//	return nil, fmt.Errorf("failed to read StreamInfo: %v", err)
-	//}
 
 	// Read Stream Table (formerly SteamInfo)
 	if playItem.StreamTable, err = ReadStreamTable(file); err != nil {
@@ -185,7 +180,6 @@ func (playItem *PlayItem) Print() {
 		PadPrintf(6, "Angle: [%d]:\n", i)
 		playItem.Angles[i].Print()
 	}
-	//playItem.StreamInfo.Print()
 	playItem.StreamTable.Print()
 }
 

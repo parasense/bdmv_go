@@ -28,24 +28,24 @@ func ReadMPLSHeader(file io.ReadSeeker) (header *MPLSHeader, err error) {
 
 	var eof int64
 	if eof, err = file.Seek(0, io.SeekEnd); err != nil {
-		return nil, fmt.Errorf("failed to seek to file end address: %v", err)
+		return nil, fmt.Errorf("failed to seek to file end address: %w", err)
 	}
 
 	if _, err := file.Seek(0, io.SeekStart); err != nil {
-		return nil, fmt.Errorf("failed to seek to file start address: %v", err)
+		return nil, fmt.Errorf("failed to seek to file start address: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &header.TypeIndicator); err != nil {
-		return nil, fmt.Errorf("failed to read header.TypeIndicator: %v", err)
+		return nil, fmt.Errorf("failed to read header.TypeIndicator: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &header.VersionNumber); err != nil {
-		return nil, fmt.Errorf("failed to read header.VersionNumber: %v", err)
+		return nil, fmt.Errorf("failed to read header.VersionNumber: %w", err)
 	}
 
 	var buffer uint32
 	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
-		return nil, fmt.Errorf("failed to read header.Playlist.start: %v", err)
+		return nil, fmt.Errorf("failed to read header.Playlist.start: %w", err)
 	}
 
 	header.AppInfo.Start = 40
@@ -53,14 +53,14 @@ func ReadMPLSHeader(file io.ReadSeeker) (header *MPLSHeader, err error) {
 	header.Playlist.Start = header.AppInfo.Stop
 
 	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
-		return nil, fmt.Errorf("failed to read header.Marks.start: %v", err)
+		return nil, fmt.Errorf("failed to read header.Marks.start: %w", err)
 	}
 
 	header.Playlist.Stop = int64(buffer)
 	header.Marks.Start = header.Playlist.Stop
 
 	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
-		return nil, fmt.Errorf("failed to read header.Extensions.Start: %v", err)
+		return nil, fmt.Errorf("failed to read header.Extensions.Start: %w", err)
 	}
 
 	if buffer == 0 {

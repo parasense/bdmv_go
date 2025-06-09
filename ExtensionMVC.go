@@ -6,28 +6,37 @@ import (
 	"io"
 )
 
+// Testing:
+// Valerian 3D is used for validation.
+
+// TODO:
+// Solve dangling 6-byte leftover data at the end.
+// * After parsing the video STN there remains mysterious 6-bytes.
+//   Of which, one byte is non-zero that indicating non-reserve padding)
+
 // MVC (Multi View Coding) is used for 3D
-type MVCStreamExtension struct {
-	numberOfItems           uint32 // XXX - not parsed, caclulated in a bad way
-	LengthOfItems           uint16
-	FixedOffsetPopUpFlag    uint8 // 0x0=false or 0x80=true
-	MVCStreams              []*Stream
-	NumberOfOffsetSequences uint8   // up to 32 e.g 0x20
-	remainingBytes          [6]byte // XXX
+type ExtensionMVCStream struct {
+	numberOfItems           uint32    // XXX - not parsed, caclulated in a bad way
+	LengthOfItems           uint16    //
+	FixedOffsetPopUpFlag    uint8     // 0x0=false or 0x80=true
+	MVCStreams              []*Stream //
+	NumberOfOffsetSequences uint8     // up to 32 e.g 0x20
+	remainingBytes          [6]byte   // XXX
 }
 
-func (mvcStreamExtension *MVCStreamExtension) Read(file io.ReadSeeker) (err error) {
+func (mvcStreamExtension *ExtensionMVCStream) Read(file io.ReadSeeker) (err error) {
 
 	if err := binary.Read(file, binary.BigEndian, &mvcStreamExtension.LengthOfItems); err != nil {
-		return fmt.Errorf("failed to read markEntry type: %w", err)
+		return err
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &mvcStreamExtension.FixedOffsetPopUpFlag); err != nil {
-		return fmt.Errorf("failed to read markEntry type: %w", err)
+		return err
 	}
 
+	// 1-byte reserve space
 	if _, err := file.Seek(1, io.SeekCurrent); err != nil {
-		return fmt.Errorf("failed to seek past reserve space: %v\n", err)
+		return err
 	}
 
 	// numberOfItems is for the loop control variable for reading STNs
@@ -68,11 +77,11 @@ func (mvcStreamExtension *MVCStreamExtension) Read(file io.ReadSeeker) (err erro
 
 // XXX - I hate this - there must be another way to get the NumberOf?
 //   - Speculation: There might be an assumption one only one item.
-func (mvcStreamExtension *MVCStreamExtension) SetNumberOfItems(length uint32) {
+func (mvcStreamExtension *ExtensionMVCStream) SetNumberOfItems(length uint32) {
 	mvcStreamExtension.numberOfItems = (length - 2) / uint32(mvcStreamExtension.LengthOfItems)
 }
 
-func (mvcStreamExtension *MVCStreamExtension) Print() {
+func (mvcStreamExtension *ExtensionMVCStream) Print() {
 	PadPrintln(4, "MVC(3D)Extension:")
 	PadPrintf(6, "numberOfItems: %d\n", mvcStreamExtension.numberOfItems)
 	PadPrintf(6, "LengthOfItems: %d\n", mvcStreamExtension.LengthOfItems)

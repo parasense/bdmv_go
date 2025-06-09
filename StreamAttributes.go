@@ -32,6 +32,14 @@ type BasicAttributes struct {
 	StreamCodingType uint8
 }
 
+func (attr *BasicAttributes) SetLength(length uint8) {
+	attr.Length = length
+}
+
+func (attr *BasicAttributes) SetStreamCodingType(streamCodingType uint8) {
+	attr.StreamCodingType = streamCodingType
+}
+
 type BasicAudioVideoAttributes struct {
 	BasicAttributes
 	Format uint8 // 4 bits high
@@ -73,155 +81,51 @@ type TextAttributes struct {
 type StreamAttributes interface {
 	Print()
 	Read(io.ReadSeeker) error
+	SetLength(uint8)
+	SetStreamCodingType(uint8)
 }
 
-func OLDReadStreamAttributes(file io.ReadSeeker) (attr StreamAttributes, err error) {
+func ReadStreamAttributes(file io.ReadSeeker) (attr StreamAttributes, err error) {
 	var buffer byte
 
 	if err = binary.Read(file, binary.BigEndian, &buffer); err != nil {
-		return nil, fmt.Errorf("failed to read Attributes length: %v\n", err)
+		return nil, fmt.Errorf("failed to read Attributes length: %w", err)
 	}
 	var length uint8 = buffer
 
 	if err = binary.Read(file, binary.BigEndian, &buffer); err != nil {
-		return nil, fmt.Errorf("failed to read Attributes streamCodingType: %v\n", err)
+		return nil, fmt.Errorf("failed to read Attributes streamCodingType: %w", err)
 	}
 	var streamCodingType uint8 = buffer
-
-	//if attr, err = NewStreamAttributes(streamCodingType); err != nil {
-	//	return nil, fmt.Errorf("failed to Create Attributes data structure: %v\n", err)
-	//}
 
 	switch streamCodingType {
 	case 1, 2, 27, 234:
-		attr := &BasicAudioVideoAttributes{}
-		attr.Length = length
-		attr.StreamCodingType = streamCodingType
-		if err := attr.Read(file); err != nil {
-			return nil, fmt.Errorf("failed call attr.Read() on MPEG attributes: %v\n", err)
-		}
-		return attr, nil
+		attr = &BasicAudioVideoAttributes{}
 
 	case 36:
-		attr := &ModernVideoAttributes{}
-		attr.Length = length
-		attr.StreamCodingType = streamCodingType
-		if err := attr.Read(file); err != nil {
-			return nil, fmt.Errorf("failed call attr.Read() on HEVC attributes: %v\n", err)
-		}
-		return attr, nil
+		attr = &ModernVideoAttributes{}
 
 	case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0xA1, 0xA2:
-		attr := &AudioAttributes{}
-		attr.Length = length
-		attr.StreamCodingType = streamCodingType
-		if err := attr.Read(file); err != nil {
-			return nil, fmt.Errorf("failed call attr.Read() on AUDIO attributes: %v\n", err)
-		}
-		return attr, nil
+		attr = &AudioAttributes{}
 
-	case 0x90: // 144
-		attr := &PGAttributes{}
-		attr.Length = length
-		attr.StreamCodingType = streamCodingType
-		if err := attr.Read(file); err != nil {
-			return nil, fmt.Errorf("failed call attr.Read() on PG attributes: %v\n", err)
-		}
-		return attr, nil
+	case 0x90: // 144 Pesentation Graphics
+		attr = &PGAttributes{}
 
-	case 0x91: // 145
-		attr := &IGAttributes{}
-		attr.Length = length
-		attr.StreamCodingType = streamCodingType
-		if err := attr.Read(file); err != nil {
-			return nil, fmt.Errorf("failed call attr.Read() on IG attributes: %v\n", err)
-		}
-		return attr, nil
+	case 0x91: // 145 Interactive Graphics
+		attr = &IGAttributes{}
 
-	case 0x92: // 146
-		attr := &PGAttributes{}
-		attr.Length = length
-		attr.StreamCodingType = streamCodingType
-		if err := attr.Read(file); err != nil {
-			return nil, fmt.Errorf("failed call attr.Read() on IG attributes: %v\n", err)
-		}
-		return attr, nil
+	case 0x92: // 146 Text subtitles (goes with Pesentation Graphics)
+		attr = &PGAttributes{}
 
 	default:
-		return nil, fmt.Errorf("failed to read TEXT stsream Atrributes\n")
+		return nil, fmt.Errorf("Unknown Stsream Atrribute code type: (%d)", streamCodingType)
 
 	}
-}
-
-// Factory function
-func NewStreamAttributes(length uint8, streamCodingType uint8) (StreamAttributes, error) {
-	switch streamCodingType {
-
-	// Note: 0x20 was added to support 3d video.
-	// 1, 2, 27, 234, 0x20(3d video)
-	case 0x01, 0x02, 0x1b, 0xea, 0x20:
-		StreamAttributes := &BasicAudioVideoAttributes{}
-		StreamAttributes.Length = length
-		StreamAttributes.StreamCodingType = streamCodingType
-		return StreamAttributes, nil
-
-	case 36:
-		StreamAttributes := &ModernVideoAttributes{}
-		StreamAttributes.Length = length
-		StreamAttributes.StreamCodingType = streamCodingType
-		return StreamAttributes, nil
-
-	case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0xA1, 0xA2:
-		StreamAttributes := &AudioAttributes{}
-		StreamAttributes.Length = length
-		StreamAttributes.StreamCodingType = streamCodingType
-		return StreamAttributes, nil
-
-	case 0x90:
-		StreamAttributes := &PGAttributes{}
-		StreamAttributes.Length = length
-		StreamAttributes.StreamCodingType = streamCodingType
-		return StreamAttributes, nil
-
-	case 0x91:
-		StreamAttributes := &IGAttributes{}
-		StreamAttributes.Length = length
-		StreamAttributes.StreamCodingType = streamCodingType
-		return StreamAttributes, nil
-
-	case 0x92:
-		StreamAttributes := &TextAttributes{}
-		StreamAttributes.Length = length
-		StreamAttributes.StreamCodingType = streamCodingType
-		return StreamAttributes, nil
-
-	default:
-		return nil, fmt.Errorf("Unknown Stream Attribute type: [%v]\n", streamCodingType)
-	}
-}
-
-func ReadStreamAttributes(file io.ReadSeeker) (StreamAttributes, error) {
-	var buffer byte
-
-	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
-		return nil, fmt.Errorf("failed to read Attributes length: %v\n", err)
-	}
-	var length uint8 = buffer
-
-	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
-		return nil, fmt.Errorf("failed to read Attributes streamCodingType: %v\n", err)
-	}
-	var streamCodingType uint8 = buffer
-
-	attr, err := NewStreamAttributes(length, streamCodingType)
-	if err != nil {
-		return nil, fmt.Errorf("failed to Create Attributes data structure: %v\n", err)
-	}
-
+	attr.SetLength(length)
+	attr.SetStreamCodingType(streamCodingType)
 	if err := attr.Read(file); err != nil {
-		return nil, fmt.Errorf("failed call attr.Read() on attributes: %v\n", err)
+		return nil, fmt.Errorf("failed call attr.Read() on attribute code type (%d) %w", streamCodingType, err)
 	}
-
 	return attr, nil
 }
 
@@ -281,14 +185,14 @@ func (attr *BasicAudioVideoAttributes) Read(file io.ReadSeeker) (err error) {
 	var buffer byte
 
 	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
-		return fmt.Errorf("failed to read Attributes MPEG buffer: %v\n", err)
+		return fmt.Errorf("failed to read Attributes MPEG buffer: %w", err)
 	}
 	attr.Format = (buffer & 0xF0) >> 4
 	attr.Rate = buffer & 0x0F
 
 	// 3 byte tail padding
 	if _, err := file.Seek(3, io.SeekCurrent); err != nil {
-		return fmt.Errorf("failed to seek past Attributes MPEG reserve space: %v\n", err)
+		return fmt.Errorf("failed to seek past Attributes MPEG reserve space: %w", err)
 	}
 	return nil
 }
@@ -297,19 +201,19 @@ func (attr *ModernVideoAttributes) Read(file io.ReadSeeker) (err error) {
 	var buffer byte
 
 	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
-		return fmt.Errorf("failed to read Attributes HEVC buffer: %v\n", err)
+		return fmt.Errorf("failed to read Attributes HEVC buffer: %w", err)
 	}
 	attr.Format = (buffer & 0xF0) >> 4
 	attr.Rate = buffer & 0x0F
 
 	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
-		return fmt.Errorf("failed to read Attributes HEVC buffer: %v\n", err)
+		return fmt.Errorf("failed to read Attributes HEVC buffer: %w", err)
 	}
 	attr.DynamicRangeType = (buffer & 0xF0) >> 4
 	attr.ColorSpace = buffer & 0x0F
 
 	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
-		return fmt.Errorf("failed to read Attributes HEVC buffer: %v\n", err)
+		return fmt.Errorf("failed to read Attributes HEVC buffer: %w", err)
 	}
 	attr.CRFlag = buffer&0x80 != 0
 	attr.HDRPlusFlag = buffer&0x40 != 0
@@ -325,25 +229,25 @@ func (attr *AudioAttributes) Read(file io.ReadSeeker) (err error) {
 	var buffer byte
 
 	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
-		return fmt.Errorf("failed to read Attributes AUDIO buffer: %v\n", err)
+		return fmt.Errorf("failed to read Attributes AUDIO buffer: %w", err)
 	}
 	attr.Format = (buffer & 0xF0) >> 4
 	attr.Rate = buffer & 0x0F
 
 	if err := binary.Read(file, binary.BigEndian, &attr.LanguageCode); err != nil {
-		return fmt.Errorf("failed to read Attributes AUDIO LanguageCode: %v\n", err)
+		return fmt.Errorf("failed to read Attributes AUDIO LanguageCode: %w", err)
 	}
 	return nil
 }
 
 func (attr *PGAttributes) Read(file io.ReadSeeker) (err error) {
 	if err := binary.Read(file, binary.BigEndian, &attr.LanguageCode); err != nil {
-		return fmt.Errorf("failed to read Attributes PG LanguageCode: %v\n", err)
+		return fmt.Errorf("failed to read Attributes PG LanguageCode: %w", err)
 	}
 
 	// 1 byte tail padding
 	if _, err := file.Seek(1, io.SeekCurrent); err != nil {
-		return fmt.Errorf("failed to seek past Attributes PG reserve space: %v\n", err)
+		return fmt.Errorf("failed to seek past Attributes PG reserve space: %w", err)
 	}
 	return nil
 
@@ -352,12 +256,12 @@ func (attr *PGAttributes) Read(file io.ReadSeeker) (err error) {
 // The exact same as PG type
 func (attr *IGAttributes) Read(file io.ReadSeeker) (err error) {
 	if err := binary.Read(file, binary.BigEndian, &attr.LanguageCode); err != nil {
-		return fmt.Errorf("failed to read Attributes IG LanguageCode: %v\n", err)
+		return fmt.Errorf("failed to read Attributes IG LanguageCode: %w", err)
 	}
 
 	// 1 byte tail padding
 	if _, err := file.Seek(1, io.SeekCurrent); err != nil {
-		return fmt.Errorf("failed to seek past Attributes IG reserve space: %v\n", err)
+		return fmt.Errorf("failed to seek past Attributes IG reserve space: %w", err)
 	}
 	return nil
 
@@ -365,11 +269,11 @@ func (attr *IGAttributes) Read(file io.ReadSeeker) (err error) {
 
 func (attr *TextAttributes) Read(file io.ReadSeeker) (err error) {
 	if err := binary.Read(file, binary.BigEndian, &attr.CharacterCode); err != nil {
-		return fmt.Errorf("failed to read Attributes TEXT CharacterCode: %v\n", err)
+		return fmt.Errorf("failed to read Attributes TEXT CharacterCode: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &attr.LanguageCode); err != nil {
-		return fmt.Errorf("failed to read Attributes TEXT LanguageCode: %v\n", err)
+		return fmt.Errorf("failed to read Attributes TEXT LanguageCode: %w", err)
 	}
 	return nil
 

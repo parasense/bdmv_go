@@ -24,10 +24,10 @@ DEV NOTE:
 
 	TODO:
 	* Extension data stuff (in-progress)
-	  - Subpaths (in progress)
-	  - 3d STNs (not started)
-	  - Static metadata (not started)
-	  - PIP metadata (not started)
+	  - Subpaths (done)
+	  - 3d STNs (incomplete - mostly done)
+	  - Static metadata (done)
+	  - PIP metadata (done)
 	* Runtime assertions & deffensive coding
 	* encoding/binary optimizations
 	  - Try to avoid any reflection code paths.
@@ -62,6 +62,15 @@ func PadPrintf(indent int, format string, args ...any) {
 func PadPrintln(indent int, args ...any) {
 	fmt.Print(strings.Repeat(" ", indent))
 	fmt.Println(args...)
+}
+
+func CalculateEndOffset[U uint8 | uint16 | uint32](file io.ReadSeeker, length U) (int64, error) {
+	currentPos, err := file.Seek(0, io.SeekCurrent)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get current position: %w", err)
+	}
+	endOffset := currentPos + int64(length)
+	return endOffset, nil
 }
 
 // ParseMPLS parses an MPLS file and returns the playlist details
@@ -118,7 +127,7 @@ func main() {
 	mplsPath := os.Args[1]
 	header, appinfo, playlist, chapterMarks, extData, err := ParseMPLS(mplsPath)
 	if err != nil {
-		fmt.Errorf("Error parsing MPLS file: %w\n", err)
+		fmt.Printf("Error parsing MPLS file: %+v\n", err)
 		os.Exit(1)
 	}
 

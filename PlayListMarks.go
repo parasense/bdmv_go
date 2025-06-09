@@ -28,21 +28,21 @@ func ReadMarks(file io.ReadSeeker, offsets *OffsetsUint32) (marks *PlaylistMarks
 
 	// Jump to start address
 	if _, err := file.Seek(offsets.Start, io.SeekStart); err != nil {
-		return nil, fmt.Errorf("failed to seek to start address: %w\n", err)
+		return nil, fmt.Errorf("failed to seek to start address: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &marks.Length); err != nil {
-		return nil, fmt.Errorf("failed to read mark length: %v\n", err)
+		return nil, fmt.Errorf("failed to read mark length: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &marks.NumberOfMarks); err != nil {
-		return nil, fmt.Errorf("failed to read number of marks: %v\n", err)
+		return nil, fmt.Errorf("failed to read number of marks: %w", err)
 	}
 
 	marks.Marks = make([]*MarkEntry, marks.NumberOfMarks)
 	for i := uint16(0); i < marks.NumberOfMarks; i++ {
 		if marks.Marks[i], err = ReadMarkEntry(file); err != nil {
-			return nil, fmt.Errorf("failed to ReadMarkEntry: %v\n", err)
+			return nil, fmt.Errorf("failed to ReadMarkEntry: %w", err)
 		}
 	}
 	return marks, nil
@@ -66,27 +66,27 @@ func ReadMarkEntry(file io.ReadSeeker) (markEntry *MarkEntry, err error) {
 
 	// Skip 1-byte reserve space
 	if _, err := file.Seek(1, io.SeekCurrent); err != nil {
-		return nil, fmt.Errorf("failed to seek past reserve space: %v\n", err)
+		return nil, fmt.Errorf("failed to seek past reserve space: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &markEntry.MarkType); err != nil {
-		return nil, fmt.Errorf("failed to read markEntry type: %v", err)
+		return nil, fmt.Errorf("failed to read markEntry type: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &markEntry.RefToPlayItemID); err != nil {
-		return nil, fmt.Errorf("failed to read markEntry play item ref ID: %v", err)
+		return nil, fmt.Errorf("failed to read markEntry play item ref ID: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &markEntry.MarkTimeStamp); err != nil {
-		return nil, fmt.Errorf("failed to read markEntry timestamp: %v", err)
+		return nil, fmt.Errorf("failed to read markEntry timestamp: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &markEntry.EntryESPID); err != nil {
-		return nil, fmt.Errorf("failed to read markEntry ES PID: %v", err)
+		return nil, fmt.Errorf("failed to read markEntry ES PID: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &markEntry.Duration); err != nil {
-		return nil, fmt.Errorf("failed to read markEntry duration: %v", err)
+		return nil, fmt.Errorf("failed to read markEntry duration: %w", err)
 	}
 
 	return markEntry, nil

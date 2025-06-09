@@ -2,25 +2,23 @@ package main
 
 import (
 	"encoding/binary"
-	"fmt"
 	"io"
 )
 
-type SubPathExtension struct {
+type ExtensionSubPath struct {
 	Length   uint32
 	Count    uint16
 	SubPaths []*SubPath
 }
 
-// XXX - fix error handling
-func (subPathExtension *SubPathExtension) Read(file io.ReadSeeker) (err error) {
+func (subPathExtension *ExtensionSubPath) Read(file io.ReadSeeker) (err error) {
 
 	if err := binary.Read(file, binary.BigEndian, &subPathExtension.Length); err != nil {
-		return fmt.Errorf("failed to read markEntry type: %w", err)
+		return err
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &subPathExtension.Count); err != nil {
-		return fmt.Errorf("failed to read markEntry type: %w", err)
+		return err
 	}
 
 	subPathExtension.SubPaths = make([]*SubPath, subPathExtension.Count)
@@ -31,12 +29,12 @@ func (subPathExtension *SubPathExtension) Read(file io.ReadSeeker) (err error) {
 	return nil
 }
 
-func (subPathExtension SubPathExtension) Print() {
-	fmt.Println("SubPathExtension")
-	fmt.Printf("  Length: %d\n", subPathExtension.Length)
-	fmt.Printf("  Count: %d\n", subPathExtension.Count)
+func (subPathExtension *ExtensionSubPath) Print() {
+	PadPrintln(4, "SubPathExtension")
+	PadPrintf(6, "Length: %d\n", subPathExtension.Length)
+	PadPrintf(6, "Count: %d\n", subPathExtension.Count)
 	for i, subPath := range subPathExtension.SubPaths {
-		fmt.Printf("  subPath [%d]:\n", i)
+		PadPrintf(6, "SubPath [%d]:\n", i)
 		subPath.Print()
 	}
 }
