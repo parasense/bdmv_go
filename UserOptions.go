@@ -48,7 +48,7 @@ func ReadUserOptions(file io.ReadSeeker) (userOptions *UserOptions, err error) {
 
 	var flagBuffer byte
 	if err := binary.Read(file, binary.BigEndian, &flagBuffer); err != nil {
-		return nil, fmt.Errorf("failed to read UO mask table: %v", err)
+		return nil, fmt.Errorf("failed to read UO mask table: %w", err)
 	}
 	userOptions.MenuCall = userOptions.getFlag(&flagBuffer, 0x80)
 	userOptions.TitleSearch = userOptions.getFlag(&flagBuffer, 0x40)
@@ -59,7 +59,7 @@ func ReadUserOptions(file io.ReadSeeker) (userOptions *UserOptions, err error) {
 	userOptions.Stop = userOptions.getFlag(&flagBuffer, 0x01)
 
 	if err := binary.Read(file, binary.BigEndian, &flagBuffer); err != nil {
-		return nil, fmt.Errorf("failed to read UO mask table: %v", err)
+		return nil, fmt.Errorf("failed to read UO mask table: %w", err)
 	}
 	userOptions.PauseOn = userOptions.getFlag(&flagBuffer, 0x80)
 	userOptions.StillOff = userOptions.getFlag(&flagBuffer, 0x20)
@@ -70,7 +70,7 @@ func ReadUserOptions(file io.ReadSeeker) (userOptions *UserOptions, err error) {
 	userOptions.MoveDownSelectedButton = userOptions.getFlag(&flagBuffer, 0x01)
 
 	if err := binary.Read(file, binary.BigEndian, &flagBuffer); err != nil {
-		return nil, fmt.Errorf("failed to read UO mask table: %v", err)
+		return nil, fmt.Errorf("failed to read UO mask table: %w", err)
 	}
 	userOptions.MoveLeftSelectedButton = userOptions.getFlag(&flagBuffer, 0x80)
 	userOptions.MoveRightSelectedButton = userOptions.getFlag(&flagBuffer, 0x40)
@@ -81,7 +81,7 @@ func ReadUserOptions(file io.ReadSeeker) (userOptions *UserOptions, err error) {
 	userOptions.AngleNumberChange = userOptions.getFlag(&flagBuffer, 0x01)
 
 	if err := binary.Read(file, binary.BigEndian, &flagBuffer); err != nil {
-		return nil, fmt.Errorf("failed to read UO mask table: %v", err)
+		return nil, fmt.Errorf("failed to read UO mask table: %w", err)
 	}
 	userOptions.PopupOn = userOptions.getFlag(&flagBuffer, 0x80)
 	userOptions.PopupOff = userOptions.getFlag(&flagBuffer, 0x40)
@@ -93,13 +93,13 @@ func ReadUserOptions(file io.ReadSeeker) (userOptions *UserOptions, err error) {
 	userOptions.SecondaryAudioStreamNumberChange = userOptions.getFlag(&flagBuffer, 0x01)
 
 	if err := binary.Read(file, binary.BigEndian, &flagBuffer); err != nil {
-		return nil, fmt.Errorf("failed to read UO mask table: %v", err)
+		return nil, fmt.Errorf("failed to read UO mask table: %w", err)
 	}
 	userOptions.SecondaryPGStreamNumberChange = userOptions.getFlag(&flagBuffer, 0x40)
 
 	// skip 3 byte reserve padding space
 	if _, err := file.Seek(3, io.SeekCurrent); err != nil {
-		return nil, fmt.Errorf("failed to seek past reserve space: %v", err)
+		return nil, fmt.Errorf("failed to seek past reserve space: %w", err)
 	}
 
 	return userOptions, nil

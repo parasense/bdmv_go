@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 )
 
@@ -11,19 +12,21 @@ type ExtensionSubPath struct {
 	SubPaths []*SubPath
 }
 
-func (subPathExtension *ExtensionSubPath) Read(file io.ReadSeeker) (err error) {
+func (extensionSubPath *ExtensionSubPath) Read(file io.ReadSeeker) (err error) {
 
-	if err := binary.Read(file, binary.BigEndian, &subPathExtension.Length); err != nil {
-		return err
+	if err := binary.Read(file, binary.BigEndian, &extensionSubPath.Length); err != nil {
+		return fmt.Errorf("failed to read extensionSubPath.Length: %w", err)
 	}
 
-	if err := binary.Read(file, binary.BigEndian, &subPathExtension.Count); err != nil {
-		return err
+	if err := binary.Read(file, binary.BigEndian, &extensionSubPath.Count); err != nil {
+		return fmt.Errorf("failed to read extensionSubPath.Count: %w", err)
 	}
 
-	subPathExtension.SubPaths = make([]*SubPath, subPathExtension.Count)
-	for i := range subPathExtension.SubPaths {
-		subPathExtension.SubPaths[i], _ = ReadSubPath(file)
+	extensionSubPath.SubPaths = make([]*SubPath, extensionSubPath.Count)
+	for i := range extensionSubPath.SubPaths {
+		if extensionSubPath.SubPaths[i], err = ReadSubPath(file); err != nil {
+			return fmt.Errorf("failed calling ReadSubPath() in ExtensionSubPath.Read(): %w", err)
+		}
 	}
 
 	return nil

@@ -15,6 +15,7 @@ type ExtensionEntryMetaData struct {
 
 func ReadExtensionsEntriesMetaData(file io.ReadSeeker, offsets *OffsetsUint32, metaData *ExtensionsMetaData) (entriesMetaData []*ExtensionEntryMetaData, err error) {
 
+	// Sanity check
 	if int64(metaData.EntryDataCount)*12+12+offsets.Start > offsets.Stop {
 		return nil, fmt.Errorf("ERROR: ReadEntryMetaData: not enough file to read Entires metadata.")
 	}
@@ -25,19 +26,19 @@ func ReadExtensionsEntriesMetaData(file io.ReadSeeker, offsets *OffsetsUint32, m
 		entriesMetaData[i] = &ExtensionEntryMetaData{}
 
 		if err := binary.Read(file, binary.BigEndian, &entriesMetaData[i].ExtDataType); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to read ExtensionEntryMetaData.ExtDataType: %w", err)
 		}
 
 		if err := binary.Read(file, binary.BigEndian, &entriesMetaData[i].ExtDataVersion); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to read ExtensionEntryMetaData.ExtDataVersion: %w", err)
 		}
 
 		if err := binary.Read(file, binary.BigEndian, &entriesMetaData[i].ExtDataStartAddress); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to read ExtensionEntryMetaData.ExtDataStartAddress: %w", err)
 		}
 
 		if err := binary.Read(file, binary.BigEndian, &entriesMetaData[i].ExtDataLength); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to read ExtensionEntryMetaData.EntryDataCount: %w", err)
 		}
 	}
 

@@ -31,54 +31,54 @@ func ReadSubPath(file io.ReadSeeker) (subPath *SubPath, err error) {
 	subPath = &SubPath{}
 
 	if err := binary.Read(file, binary.BigEndian, &subPath.Length); err != nil {
-		return nil, fmt.Errorf("failed to read stream info length: %v\n", err)
+		return nil, fmt.Errorf("failed to read stream info length: %w", err)
 	}
 
 	end, err := CalculateEndOffset(file, subPath.Length)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed calling CalculateEndOffset(): %w", err)
 	}
 
 	// Skip 1-byte reserve space
 	if _, err := file.Seek(1, io.SeekCurrent); err != nil {
-		return nil, fmt.Errorf("failed to seek past reserve space: %v\n", err)
+		return nil, fmt.Errorf("failed to seek past reserve space: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &subPath.SubPathType); err != nil {
-		return nil, fmt.Errorf("failed to read stream info SubPathType: %v\n", err)
+		return nil, fmt.Errorf("failed to read stream info SubPathType: %w", err)
 	}
 
 	// Skip 1-byte reserve space
 	if _, err := file.Seek(1, io.SeekCurrent); err != nil {
-		return nil, fmt.Errorf("failed to seek past reserve space: %v\n", err)
+		return nil, fmt.Errorf("failed to seek past reserve space: %w", err)
 	}
 
 	var buffer byte
 	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
-		return nil, fmt.Errorf("failed to read Attributes streamCodingType: %v\n", err)
+		return nil, fmt.Errorf("failed to read Attributes streamCodingType: %w", err)
 	}
 	subPath.IsRepeatSubPath = buffer&0x01 != 0
 
 	// Skip 1-byte reserve space
 	if _, err := file.Seek(1, io.SeekCurrent); err != nil {
-		return nil, fmt.Errorf("failed to seek past reserve space: %v\n", err)
+		return nil, fmt.Errorf("failed to seek past reserve space: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &subPath.NumberOfSubPlayItems); err != nil {
-		return nil, fmt.Errorf("failed to read stream info NumberOfSubPlayItems: %v\n", err)
+		return nil, fmt.Errorf("failed to read stream info NumberOfSubPlayItems: %w", err)
 	}
 
 	// Create the container of SubPlayItems
 	subPath.SubPlayItems = make([]*SubPlayItem, subPath.NumberOfSubPlayItems)
 	for i := uint8(0); i < uint8(len(subPath.SubPlayItems)); i++ {
 		if subPath.SubPlayItems[i], err = ReadSubPlayItem(file); err != nil {
-			return nil, fmt.Errorf("failed to read SubPlayItem: %v\n", err)
+			return nil, fmt.Errorf("failed to read SubPlayItem: %w", err)
 		}
 	}
 
 	// Skip to the end
 	if _, err = file.Seek(end, io.SeekStart); err != nil {
-		return nil, fmt.Errorf("failed to seek end offset: %v\n", err)
+		return nil, fmt.Errorf("failed to seek end offset: %w", err)
 	}
 
 	return subPath, nil

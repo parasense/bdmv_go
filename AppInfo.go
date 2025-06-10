@@ -18,8 +18,8 @@ type AppInfo struct {
 	SDRConversionNotificationFlag bool
 }
 
-func ReadAppInfo(file io.ReadSeeker, offsets *OffsetsUint32) (*AppInfo, error) {
-	appinfo := &AppInfo{}
+func ReadAppInfo(file io.ReadSeeker, offsets *OffsetsUint32) (appinfo *AppInfo, err error) {
+	appinfo = &AppInfo{}
 
 	// Jump to start address
 	if _, err := file.Seek(offsets.Start, io.SeekStart); err != nil {
@@ -32,26 +32,23 @@ func ReadAppInfo(file io.ReadSeeker, offsets *OffsetsUint32) (*AppInfo, error) {
 
 	// Reserve space 1 byte.
 	if _, err := file.Seek(1, io.SeekCurrent); err != nil {
-		return nil, fmt.Errorf("failed to seek past reserve byte: %v", err)
+		return nil, fmt.Errorf("failed to seek past reserve byte: %w", err)
 	}
 	if err := binary.Read(file, binary.BigEndian, &appinfo.PlaybackType); err != nil {
-		return nil, fmt.Errorf("failed to read appinfo.PlaybackType: %v", err)
+		return nil, fmt.Errorf("failed to read appinfo.PlaybackType: %w", err)
 	}
 	if err := binary.Read(file, binary.BigEndian, &appinfo.PlaybackCount); err != nil {
-		return nil, fmt.Errorf("failed to read appinfo.PlaybackCount: %v", err)
+		return nil, fmt.Errorf("failed to read appinfo.PlaybackCount: %w", err)
 	}
 
-	// XXX - no error handling here.
-	var err error
-	appinfo.UserOptions, err = ReadUserOptions(file)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read UserOptions: %v", err)
+	if appinfo.UserOptions, err = ReadUserOptions(file); err != nil {
+		return nil, fmt.Errorf("failed to read UserOptions: %w", err)
 	}
 
 	// flags 5 bits of 1 byte
 	var flagBuffer uint8
 	if err := binary.Read(file, binary.BigEndian, &flagBuffer); err != nil {
-		return nil, fmt.Errorf("failed to read flagBuffer: %v", err)
+		return nil, fmt.Errorf("failed to read flagBuffer: %w", err)
 	}
 	appinfo.RandomAccessFlag = flagBuffer&0x80 != 0
 	appinfo.AudioMixFlag = flagBuffer&0x40 != 0
@@ -61,7 +58,7 @@ func ReadAppInfo(file io.ReadSeeker, offsets *OffsetsUint32) (*AppInfo, error) {
 
 	// Reserve space 1 byte.
 	if _, err := file.Seek(1, io.SeekCurrent); err != nil {
-		return nil, fmt.Errorf("failed to seek past reserve byte: %v", err)
+		return nil, fmt.Errorf("failed to seek past reserve byte: %w", err)
 	}
 	return appinfo, nil
 }

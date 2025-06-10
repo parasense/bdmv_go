@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-// This is the new extension organization
+// This how extensions are organized...
 // There are three distinct regions.
 // * Metadata for the entire extensions.
 // * Metadata for the individual extension entries.
@@ -48,11 +48,11 @@ func ReadExtensions(file io.ReadSeeker, offsets *OffsetsUint32) (extensions *Ext
 	// Read the extension entries metadata
 	// 12-bytes for-each metadata entry
 	if extensions.EntriesMetaData, err = ReadExtensionsEntriesMetaData(file, offsets, extensions.MetaData); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed calling ReadExtensionsEntriesMetaData(): %w", err)
 	}
 
 	// Read the actual extension data entries
-	extensions.EntriesData, err = NEWReadExtensionEntryData(file, offsets, extensions.MetaData, &extensions.EntriesMetaData)
+	extensions.EntriesData, err = ReadExtensionEntryData(file, offsets, extensions.MetaData, &extensions.EntriesMetaData)
 
 	return extensions, err
 }

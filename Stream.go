@@ -14,11 +14,11 @@ func ReadStream(file io.ReadSeeker) (stream *Stream, err error) {
 	stream = &Stream{}
 	stream.Entry, err = ReadStreamEntry(file)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read StreamEntry: %v\n", err)
+		return nil, fmt.Errorf("failed to read StreamEntry: %w", err)
 	}
 	stream.Attr, err = ReadStreamAttributes(file)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read StreamAttributes: %v\n", err)
+		return nil, fmt.Errorf("failed to read StreamAttributes: %w", err)
 	}
 	return stream, nil
 }

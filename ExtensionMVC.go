@@ -27,26 +27,24 @@ type ExtensionMVCStream struct {
 func (mvcStreamExtension *ExtensionMVCStream) Read(file io.ReadSeeker) (err error) {
 
 	if err := binary.Read(file, binary.BigEndian, &mvcStreamExtension.LengthOfItems); err != nil {
-		return err
+		return fmt.Errorf("failed to read ExtensionMVCStream.LengthOfItems: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &mvcStreamExtension.FixedOffsetPopUpFlag); err != nil {
-		return err
+		return fmt.Errorf("failed to read ExtensionMVCStream.FixedOffsetPopUpFlag: %w", err)
 	}
 
 	// 1-byte reserve space
 	if _, err := file.Seek(1, io.SeekCurrent); err != nil {
-		return err
+		return fmt.Errorf("failed to seek past reserve space: %w", err)
 	}
 
 	// numberOfItems is for the loop control variable for reading STNs
 	mvcStreamExtension.numberOfItems = mvcStreamExtension.numberOfItems / uint32(mvcStreamExtension.LengthOfItems)
 
-	// TODO - fix error handling
-
 	// StereoScopic (3D) Video Stream
 	if err := ReadStreamWrapper(file, uint8(mvcStreamExtension.numberOfItems), &mvcStreamExtension.MVCStreams); err != nil {
-		//return nil, err
+		return fmt.Errorf("failed calling ReadStreamWrapper(): %w", err)
 	}
 
 	file.Seek(1, io.SeekCurrent) // skip 1-byte reserve space
@@ -59,7 +57,9 @@ func (mvcStreamExtension *ExtensionMVCStream) Read(file io.ReadSeeker) (err erro
 	//       There appears to a data structure in the remaining 6-bytes.
 	//       The 3rd byte is set to 0x01, the rest are all zero.
 	// TODO: Remove this when the mystery is solved, and there is a legitimate struct.
-	binary.Read(file, binary.BigEndian, &mvcStreamExtension.remainingBytes)
+	if err := binary.Read(file, binary.BigEndian, &mvcStreamExtension.remainingBytes); err != nil {
+		return err
+	}
 
 	// XXX - there should not be any remaining bytes.
 	//     - The 3rd byte is set as "1", so it cannot be reserve space.

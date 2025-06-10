@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 )
 
@@ -15,20 +16,20 @@ func ReadMetaData(file io.ReadSeeker) (metaData *ExtensionsMetaData, err error) 
 	metaData = &ExtensionsMetaData{}
 
 	if err := binary.Read(file, binary.BigEndian, &metaData.Length); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read ExtensionsMetaData.Length: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &metaData.EntryDataStartAddr); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read ExtensionsMetaData.EntryDataStartAddr: %w", err)
 	}
 
 	// Skip 3-byte reserve space
 	if _, err := file.Seek(3, io.SeekCurrent); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read seek past reserve space: %w", err)
 	}
 
 	if err := binary.Read(file, binary.BigEndian, &metaData.EntryDataCount); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read ExtensionsMetaData.EntryDataCount: %w", err)
 	}
 
 	return metaData, err
