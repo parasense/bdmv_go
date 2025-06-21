@@ -34,9 +34,11 @@ func ReadAppInfo(file io.ReadSeeker, offsets *OffsetsUint32) (appinfo *AppInfo, 
 	if _, err := file.Seek(1, io.SeekCurrent); err != nil {
 		return nil, fmt.Errorf("failed to seek past reserve byte: %w", err)
 	}
+
 	if err := binary.Read(file, binary.BigEndian, &appinfo.PlaybackType); err != nil {
 		return nil, fmt.Errorf("failed to read appinfo.PlaybackType: %w", err)
 	}
+
 	if err := binary.Read(file, binary.BigEndian, &appinfo.PlaybackCount); err != nil {
 		return nil, fmt.Errorf("failed to read appinfo.PlaybackCount: %w", err)
 	}

@@ -19,33 +19,123 @@ import (
 // * Shaun of the Dead 2004
 // * V for Vendetta 2005
 
+/*
+ Sellected For testing:
+ 	SERENITY/BDMV/PLAYLIST/00000.mpls
+
+*/
+
+// ExtensionPIP implements the ExtensionEntryData interface.
 type ExtensionPIP struct {
-	ClipRef           uint16
-	SecondaryVideoRef uint8
-	TimelineType      uint8 // 4-bits 0b11110000
-	LumaKeyFlag       bool  // 1-bit  0b00001000
-	TrickPlayFlag     bool  // 1-bit  0b00000100
-	UpperLimitLumaKey uint8
-	DataAddress       uint32
-	NumberOfEntries   uint16
-	PIPEntries        []*PIPEntry
+	Length          uint32
+	NumberOfEntries uint16
+	PIPEntries      []*PIPEntry
 }
 
 type PIPEntry struct {
-	Time        uint32
-	Xpos        uint16 // 12-bits high
-	Ypos        uint16 // 12-bits low  (this & prev consume 3-bytes)
-	ScaleFactor uint8  // 4-bits (high)
+	ClipRef           uint16
+	SecondaryVideoRef uint8
+	TimelineType      uint8 // 0b11110000
+	LumaKeyFlag       bool  // 0b00001000
+	TrickPlayFlag     bool  // 0b00000100
+	UpperLimitLumaKey uint8
+	DataAddress       uint32
+	Data              *PIPData
 }
 
-func (pip *ExtensionPIP) Read(file io.ReadSeeker) (err error) {
-	pip = &ExtensionPIP{}
+type PIPData struct {
+	NumberOfEntries uint16
+	Entries         []*PIPDataEntry
+}
 
-	if err := binary.Read(file, binary.BigEndian, &pip.ClipRef); err != nil {
+type PIPDataEntry struct {
+	Time        uint32
+	Xpos        uint16         // 0b11111111 0b11110000 0b00000000
+	Ypos        uint16         // 0b00000000 0b00001111 0b11111111
+	ScaleFactor PIPScalingType // 0b11110000
+}
+
+func (pip *ExtensionPIP) Read(file io.ReadSeeker, offsets *OffsetsUint32, entryMeta *ExtensionEntryMetaData) (err error) {
+
+	PadPrintln(0, "PIP Extension:")
+	PadPrintln(2, "---")
+
+	// Calculate the Start/Stop offsets for this extension.
+	offsetStart := offsets.Start + int64(entryMeta.ExtDataStartAddress)
+	offsetStop := offsetStart + int64(entryMeta.ExtDataLength)
+	PadPrintf(2, "offsetStart == %d\n", offsetStart)
+	PadPrintf(2, "offsetStop  == %d\n", offsetStop)
+	PadPrintln(2, "---")
+
+	// Jump to the start offset
+	if _, err := file.Seek(offsetStart, io.SeekStart); err != nil {
+		return fmt.Errorf("failed to seek Entry Offset Start: (%d); error: %w", offsetStart, err)
+	}
+
+	// XXX - DEBUG block
+	PadPrintln(0, "Extensions Entry DEBUG:")
+	PadPrintf(2, "ExtDataType == %d\n", entryMeta.ExtDataType)
+	PadPrintf(2, "ExtDataVersion == %d\n", entryMeta.ExtDataVersion)
+	PadPrintf(2, "ExtDataStartAddress == %d\n", entryMeta.ExtDataStartAddress)
+	PadPrintf(2, "ExtDataLength == %d\n", entryMeta.ExtDataLength)
+	fmt.Println("---")
+	// XXX - EO DEBUG block
+
+	startPos, _ := ftell(file)
+
+	binary.Read(file, binary.BigEndian, &pip.Length)
+	binary.Read(file, binary.BigEndian, &pip.NumberOfEntries)
+	pip.PIPEntries = make([]*PIPEntry, pip.NumberOfEntries)
+
+	// Fill the PIPEntries
+	for i := range pip.PIPEntries {
+		pip.PIPEntries[i] = &PIPEntry{}
+		pip.PIPEntries[i].Read(file)
+	}
+
+	// Fill the PIPData
+	for i, pipEntry := range pip.PIPEntries {
+		pip.PIPEntries[i].Data = &PIPData{}
+
+		// Jump to the data address.
+		if _, err := file.Seek(startPos+int64(pipEntry.DataAddress), io.SeekStart); err != nil {
+			return fmt.Errorf("failed to seek to PIP data address: %w", err)
+		}
+
+		if err := binary.Read(file, binary.BigEndian, &pip.PIPEntries[i].Data.NumberOfEntries); err != nil {
+			return fmt.Errorf("failed reading pip.PIPEntries[i].Data.NumberOfEntries: %w", err)
+		}
+
+		pip.PIPEntries[i].Data.Entries = make([]*PIPDataEntry, pip.PIPEntries[i].Data.NumberOfEntries)
+
+		for j := range pip.PIPEntries[i].Data.Entries {
+			pip.PIPEntries[i].Data.Entries[j] = &PIPDataEntry{}
+
+			if err := binary.Read(file, binary.BigEndian, &pip.PIPEntries[i].Data.Entries[j].Time); err != nil {
+				return fmt.Errorf("failed reading PIPEntry.Time: %w", err)
+			}
+
+			var buffer [4]byte
+			if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
+				return fmt.Errorf("failed reading PIPEntry.Xpos: %w", err)
+			}
+			_tmp := uint32(buffer[0])<<16 | uint32(buffer[1])<<8 | uint32(buffer[2])
+			pip.PIPEntries[i].Data.Entries[j].Xpos = uint16((_tmp & 0xFFF000) >> 12)
+			pip.PIPEntries[i].Data.Entries[j].Ypos = uint16(_tmp & 0x000FFF)
+			pip.PIPEntries[i].Data.Entries[j].ScaleFactor = PIPScalingType((buffer[3] & 0xF0) >> 4)
+		}
+	}
+
+	return nil
+}
+
+func (pipEntry *PIPEntry) Read(file io.ReadSeeker) error {
+
+	if err := binary.Read(file, binary.BigEndian, &pipEntry.ClipRef); err != nil {
 		return fmt.Errorf("failed reading ExtensionPIP.ClipRef: %w", err)
 	}
 
-	if err := binary.Read(file, binary.BigEndian, &pip.SecondaryVideoRef); err != nil {
+	if err := binary.Read(file, binary.BigEndian, &pipEntry.SecondaryVideoRef); err != nil {
 		return fmt.Errorf("failed reading ExtensionPIP.SecondaryVideoRef: %w", err)
 	}
 
@@ -57,21 +147,21 @@ func (pip *ExtensionPIP) Read(file io.ReadSeeker) (err error) {
 	if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
 		return fmt.Errorf("failed reading buffer: %w", err)
 	}
-	pip.TimelineType = (buffer & 0xF0) >> 4
-	pip.LumaKeyFlag = buffer&0x08 != 0
-	pip.TrickPlayFlag = buffer&0x04 != 0
+	pipEntry.TimelineType = (buffer & 0xF0) >> 4
+	pipEntry.LumaKeyFlag = buffer&0x08 != 0
+	pipEntry.TrickPlayFlag = buffer&0x04 != 0
 
 	if _, err := file.Seek(1, io.SeekCurrent); err != nil {
 		return fmt.Errorf("failed to seek past reserve space: %w", err)
 	}
 
-	if pip.LumaKeyFlag {
+	if pipEntry.LumaKeyFlag {
 
 		if err := binary.Read(file, binary.BigEndian, &buffer); err != nil {
 			return fmt.Errorf("failed reading buffer: %w", err)
 		}
 
-		if err := binary.Read(file, binary.BigEndian, &pip.UpperLimitLumaKey); err != nil {
+		if err := binary.Read(file, binary.BigEndian, &pipEntry.UpperLimitLumaKey); err != nil {
 			return fmt.Errorf("failed reading ExtensionPIP.UpperLimitLumaKey: %w", err)
 		}
 
@@ -86,40 +176,8 @@ func (pip *ExtensionPIP) Read(file io.ReadSeeker) (err error) {
 		return fmt.Errorf("failed to seek past reserve space: %w", err)
 	}
 
-	if err := binary.Read(file, binary.BigEndian, &pip.DataAddress); err != nil {
-		return fmt.Errorf("failed reading ExtensionPIP.NumberOfEntries: %w", err)
-	}
-	//fmt.Printf("ExtensionPIP: DataAddress: %d \n\n", pip.DataAddress)
-
-	// Sanity checks here (?)
-	// _parse_pip_data
-
-	// WARNING: there could be a jump/seek to pip.DataAddress
-
-	if err := binary.Read(file, binary.BigEndian, &pip.NumberOfEntries); err != nil {
-		return fmt.Errorf("failed reading ExtensionPIP.NumberOfEntries: %w", err)
-	}
-
-	if pip.NumberOfEntries > 0 {
-		pip.PIPEntries = make([]*PIPEntry, pip.NumberOfEntries)
-	}
-
-	for i := range pip.PIPEntries {
-		if err := binary.Read(file, binary.BigEndian, &pip.PIPEntries[i].Time); err != nil {
-			return fmt.Errorf("failed reading PIPEntry.Time: %w", err)
-		}
-
-		if err := binary.Read(file, binary.BigEndian, &pip.PIPEntries[i].Xpos); err != nil {
-			return fmt.Errorf("failed reading PIPEntry.Xpos: %w", err)
-		}
-
-		if err := binary.Read(file, binary.BigEndian, &pip.PIPEntries[i].Ypos); err != nil {
-			return fmt.Errorf("failed reading PIPEntry.Ypos: %w", err)
-		}
-
-		if err := binary.Read(file, binary.BigEndian, &pip.PIPEntries[i].ScaleFactor); err != nil {
-			return fmt.Errorf("failed reading PIPEntry.ScaleFactor: %w", err)
-		}
+	if err := binary.Read(file, binary.BigEndian, &pipEntry.DataAddress); err != nil {
+		return fmt.Errorf("failed reading ExtensionPIP.DataAddress: %w", err)
 	}
 
 	return nil
@@ -127,11 +185,38 @@ func (pip *ExtensionPIP) Read(file io.ReadSeeker) (err error) {
 
 func (pip *ExtensionPIP) Print() {
 	PadPrintln(4, "PIP Extension:")
-	PadPrintf(6, "ClipRef: %d\n", pip.ClipRef)
-	PadPrintf(6, "SecondaryVideoRef: %d\n", pip.SecondaryVideoRef)
-	PadPrintf(6, "TimelineType: %d\n", pip.TimelineType)
-	PadPrintf(6, "LumaKeyFlag: %v\n", pip.LumaKeyFlag)
-	PadPrintf(6, "TrickPlayFlag: %v\n", pip.TrickPlayFlag)
-	PadPrintf(6, "UpperLimitLumaKey: %d\n", pip.UpperLimitLumaKey)
-	PadPrintf(6, "DataAddress: %d\n", pip.DataAddress)
+	PadPrintf(6, "Length: %d\n", pip.Length)
+	PadPrintf(6, "NumberOfEntries: %d\n", pip.NumberOfEntries)
+	for i, pipEntry := range pip.PIPEntries {
+		PadPrintf(8, "PIPEntry[%d]:\n", i+1)
+		pipEntry.Print()
+		PadPrintln(8, "---")
+	}
+}
+
+func (pipEntry *PIPEntry) Print() {
+	PadPrintf(10, "ClipRef: %d\n", pipEntry.ClipRef)
+	PadPrintf(10, "SecondaryVideoRef: %d\n", pipEntry.SecondaryVideoRef)
+	PadPrintf(10, "TimelineType: %d\n", pipEntry.TimelineType)
+	PadPrintf(10, "LumaKeyFlag: %v\n", pipEntry.LumaKeyFlag)
+	PadPrintf(10, "TrickPlayFlag: %v\n", pipEntry.TrickPlayFlag)
+	PadPrintf(10, "UpperLimitLumaKey: %d\n", pipEntry.UpperLimitLumaKey)
+	PadPrintf(10, "DataAddress: %d\n", pipEntry.DataAddress)
+	pipEntry.Data.Print()
+}
+
+func (pipData *PIPData) Print() {
+	PadPrintf(12, "NumberOfEntries: %d\n", pipData.NumberOfEntries)
+	for i, entry := range pipData.Entries {
+		PadPrintf(12, "PIPData[%d]:\n", i+1)
+		entry.Print()
+		PadPrintln(12, "---")
+	}
+}
+
+func (pipDataEntry *PIPDataEntry) Print() {
+	PadPrintf(14, "Time: %v\n", pipDataEntry.Time)
+	PadPrintf(14, "Xpos: %d\n", pipDataEntry.Xpos)
+	PadPrintf(14, "Ypos: %d\n", pipDataEntry.Ypos)
+	PadPrintf(14, "ScaleFactor: %d [%s]\n", pipDataEntry.ScaleFactor, PIPScaling(pipDataEntry.ScaleFactor))
 }

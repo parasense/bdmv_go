@@ -59,6 +59,10 @@ func ReadStreamEntry(file io.ReadSeeker) (entry StreamEntry, err error) {
 	}
 	var streamType uint8 = buffer
 
+	//// XXX
+	//fmt.Printf("DEBUG: StreamEntry.Length: %d\n", length)
+	//fmt.Printf("DEBUG: StreamEntry.streamType: %d\n", streamType)
+
 	switch streamType {
 	case 1:
 		entry = &StreamEntryTypeI{}
@@ -70,38 +74,42 @@ func ReadStreamEntry(file io.ReadSeeker) (entry StreamEntry, err error) {
 		return nil, fmt.Errorf("ReadStreamEntry(): Unknown Stream Entry type: %d", streamType)
 	}
 
-	entry.SetLength(length)
-	entry.SetStreamType(streamType)
-	if err := entry.Read(file); err != nil {
-		return nil, fmt.Errorf("Failed calling entry.Read() on StreamEntry (type %d): %w", streamType, err)
+	if entry != nil {
+		entry.SetLength(length)
+		entry.SetStreamType(streamType)
+		if err := entry.Read(file); err != nil {
+			return nil, fmt.Errorf("Failed calling entry.Read() on StreamEntry (type %d): %w", streamType, err)
+		}
+	} else {
+		fmt.Printf("ERROR: unkown StreamEntry is nil\n")
 	}
-	return entry, nil
 
+	return entry, nil
 }
 
 // Print implements NewPrimaryStreamEntry.
 func (entry *StreamEntryTypeI) Print() {
-	PadPrintln(6, "StreamEntry:")
-	PadPrintf(8, "Length: %d\n", entry.Length)
-	PadPrintf(8, "StreamType: %d\n", entry.StreamType)
-	PadPrintf(8, "RefToStreamPID: %d\n", entry.RefToStreamPID)
+	PadPrintln(10, "Entry:")
+	PadPrintf(12, "Length: %d\n", entry.Length)
+	PadPrintf(12, "StreamType: %d [%s]\n", entry.StreamType, StreamType(entry.StreamType))
+	PadPrintf(12, "RefToStreamPID: %d\n", entry.RefToStreamPID)
 }
 
 func (entry *StreamEntryTypeII) Print() {
-	PadPrintln(6, "StreamEntry:")
-	PadPrintf(8, "Length: %d\n", entry.Length)
-	PadPrintf(8, "StreamType: %d\n", entry.StreamType)
-	PadPrintf(8, "RefToSubPathID: %d\n", entry.RefToSubPathID)
-	PadPrintf(8, "RefToSubClipID: %d\n", entry.RefToSubClipID)
-	PadPrintf(8, "RefToStreamPID: %d\n", entry.RefToStreamPID)
+	PadPrintln(10, "Entry:")
+	PadPrintf(12, "Length: %d\n", entry.Length)
+	PadPrintf(12, "StreamType: %d [%s]\n", entry.StreamType, StreamType(entry.StreamType))
+	PadPrintf(12, "RefToSubPathID: %d\n", entry.RefToSubPathID)
+	PadPrintf(12, "RefToSubClipID: %d\n", entry.RefToSubClipID)
+	PadPrintf(12, "RefToStreamPID: %d\n", entry.RefToStreamPID)
 }
 
 func (entry *StreamEntryTypeIII) Print() {
-	PadPrintln(6, "StreamEntry:")
-	PadPrintf(8, "Length: %d\n", entry.Length)
-	PadPrintf(8, "StreamType: %d\n", entry.StreamType)
-	PadPrintf(8, "RefToSubPathID: %d\n", entry.RefToSubPathID)
-	PadPrintf(8, "RefToStreamPID: %d\n", entry.RefToStreamPID)
+	PadPrintln(10, "Entry:")
+	PadPrintf(12, "Length: %d\n", entry.Length)
+	PadPrintf(12, "StreamType: %d [%s]\n", entry.StreamType, StreamType(entry.StreamType))
+	PadPrintf(12, "RefToSubPathID: %d\n", entry.RefToSubPathID)
+	PadPrintf(12, "RefToStreamPID: %d\n", entry.RefToStreamPID)
 }
 
 func (entry *StreamEntryTypeI) Read(file io.ReadSeeker) (err error) {

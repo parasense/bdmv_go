@@ -10,16 +10,19 @@ type Stream struct {
 	Attr  StreamAttributes
 }
 
-func ReadStream(file io.ReadSeeker) (stream *Stream, err error) {
+func ReadStream(file io.ReadSeeker, kindOf StreamTypeKindOf) (stream *Stream, err error) {
 	stream = &Stream{}
+
 	stream.Entry, err = ReadStreamEntry(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read StreamEntry: %w", err)
 	}
-	stream.Attr, err = ReadStreamAttributes(file)
+
+	stream.Attr, err = ReadStreamAttributes(file, kindOf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read StreamAttributes: %w", err)
 	}
+
 	return stream, nil
 }
 

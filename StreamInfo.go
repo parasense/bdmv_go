@@ -6,22 +6,25 @@ import (
 	"io"
 )
 
+type StreamTypeKindOf string
+
 // Stream type constants
 const (
-	STREAM_TYPE_VIDEO           = "Video"
-	STREAM_TYPE_AUDIO           = "Audio"
-	STREAM_TYPE_PG              = "PresentationGraphics"
-	STREAM_TYPE_IG              = "InteractiveGraphics"
-	STREAM_TYPE_SECONDARY_AUDIO = "SecondaryAudio"
-	STREAM_TYPE_SECONDARY_VIDEO = "SecondaryVideo"
-	STREAM_TYPE_PIP             = "PIP"
-	STREAM_TYPE_DV              = "DolbyVision"
+	STREAM_TYPE_PRIMARY_VIDEO   StreamTypeKindOf = "PrimaryVideo"
+	STREAM_TYPE_PRIMARY_AUDIO   StreamTypeKindOf = "PrimaryAudio"
+	STREAM_TYPE_PG              StreamTypeKindOf = "PresentationGraphics"
+	STREAM_TYPE_IG              StreamTypeKindOf = "InteractiveGraphics"
+	STREAM_TYPE_SECONDARY_AUDIO StreamTypeKindOf = "SecondaryAudio"
+	STREAM_TYPE_SECONDARY_VIDEO StreamTypeKindOf = "SecondaryVideo"
+	STREAM_TYPE_PIP             StreamTypeKindOf = "PIP"
+	STREAM_TYPE_DV              StreamTypeKindOf = "DolbyVision"
 )
 
-// streamKinds defines the supported stream types
-var streamKinds = []string{
-	STREAM_TYPE_VIDEO,
-	STREAM_TYPE_AUDIO,
+// streamKinds defines the set of supported stream types
+// The order is important!
+var streamKinds = []StreamTypeKindOf{
+	STREAM_TYPE_PRIMARY_VIDEO,
+	STREAM_TYPE_PRIMARY_AUDIO,
 	STREAM_TYPE_PG,
 	STREAM_TYPE_IG,
 	STREAM_TYPE_SECONDARY_AUDIO,
@@ -30,10 +33,10 @@ var streamKinds = []string{
 	STREAM_TYPE_DV,
 }
 
-// StreamItem holds a counter, type, and streams.
+// StreamItem holds a counter, StreamType label, and streams.
 type StreamItem struct {
 	NumberOf uint8
-	KindOf   string
+	KindOf   StreamTypeKindOf
 	Streams  []*Stream
 }
 
@@ -44,11 +47,11 @@ type StreamTable struct {
 }
 
 // ReadStreamWrapper populates a slice of Stream pointers from an io.ReaderSeeker.
-func ReadStreamWrapper(file io.ReadSeeker, count uint8, streamPointer *[]*Stream) (err error) {
-	if count != 0 {
-		*streamPointer = make([]*Stream, count)
-		for i := uint8(0); i < count; i++ {
-			if (*streamPointer)[i], err = ReadStream(file); err != nil {
+func ReadStreamWrapper(file io.ReadSeeker, streamItem *StreamItem) (err error) {
+	if streamItem.NumberOf != 0 {
+		streamItem.Streams = make([]*Stream, streamItem.NumberOf)
+		for i := range streamItem.NumberOf {
+			if streamItem.Streams[i], err = ReadStream(file, streamItem.KindOf); err != nil {
 				return fmt.Errorf("failed to read Stream: %w", err)
 			}
 		}
@@ -70,6 +73,15 @@ func ReadStreamTable(file io.ReadSeeker) (*StreamTable, error) {
 		return nil, fmt.Errorf("failed to read stream table length: %w", err)
 	}
 
+	end, err := CalculateEndOffset(file, streamTable.Length)
+	if err != nil {
+		return nil, fmt.Errorf("failed calling CalculateEndOffset(): %w", err)
+	}
+
+	// XXX
+	fmt.Printf("DEBUG: StreamTable.Length: %d\n", streamTable.Length)
+	fmt.Printf("DEBUG: StreamTable.end: %d\n", end)
+
 	// Seek past reserved 2-byte space
 	if _, err := file.Seek(2, io.SeekCurrent); err != nil {
 		return nil, fmt.Errorf("failed to seek past reserved space: %w", err)
@@ -82,6 +94,9 @@ func ReadStreamTable(file io.ReadSeeker) (*StreamTable, error) {
 		}
 	}
 
+	// XXX
+	//fmt.Printf("DEBUG: StreamTable(): \n%+v\n\n", streamTable)
+
 	// Seek past reserved 4-byte space
 	if _, err := file.Seek(4, io.SeekCurrent); err != nil {
 		return nil, fmt.Errorf("failed to seek past reserved space: %w", err)
@@ -89,9 +104,14 @@ func ReadStreamTable(file io.ReadSeeker) (*StreamTable, error) {
 
 	// Read the Streams
 	for _, item := range streamTable.Items {
-		if err := ReadStreamWrapper(file, item.NumberOf, &item.Streams); err != nil {
+		if err := ReadStreamWrapper(file, item); err != nil {
 			return nil, fmt.Errorf("failed to read %s: %w", item.KindOf, err)
 		}
+	}
+
+	// Skip to the end
+	if _, err = file.Seek(end, io.SeekStart); err != nil {
+		return nil, fmt.Errorf("StreamTable: failed to seek end offset: %w", err)
 	}
 
 	// Validate the StreamTable
@@ -133,9 +153,14 @@ func (streamTable *StreamTable) Print() {
 
 	for _, item := range streamTable.Items {
 		PadPrintf(6, "NumberOf%s: %d\n", item.KindOf, item.NumberOf)
-		for j, stream := range item.Streams {
-			PadPrintf(6, "%s Stream [%d]:\n", item.KindOf, j)
-			stream.Print()
+		if item.NumberOf != 0 {
+			for j, stream := range item.Streams {
+				PadPrintf(8, "%s Stream [%d]:\n", item.KindOf, j+1)
+				stream.Print()
+				PadPrintln(8, "---")
+			}
+		} else {
+			PadPrintln(8, "[skip]")
 		}
 	}
 }

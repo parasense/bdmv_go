@@ -20,6 +20,8 @@ type Extensions struct {
 func ReadExtensions(file io.ReadSeeker, offsets *OffsetsUint32) (extensions *Extensions, err error) {
 	extensions = &Extensions{}
 
+	fmt.Printf("\n\nEXTENSIONS: START OFFSET: %+v\n\n\n", offsets.Start)
+
 	// Jump to start address
 	if _, err := file.Seek(offsets.Start, io.SeekStart); err != nil {
 		return nil, fmt.Errorf("failed to seek to start address: %w\n", err)
@@ -34,10 +36,14 @@ func ReadExtensions(file io.ReadSeeker, offsets *OffsetsUint32) (extensions *Ext
 	// 12-bytes total
 	extensions.MetaData, err = ReadMetaData(file)
 
-	fmt.Printf("DEBUG: MetaData: MetaData.Length == %d\n", extensions.MetaData.Length)
-	fmt.Printf("DEBUG: MetaData: MetaData.EntryDataStartAddr == %d\n", extensions.MetaData.EntryDataStartAddr)
-	fmt.Printf("DEBUG: MetaData: MetaData.EntryDataCount == %d\n\n", extensions.MetaData.EntryDataCount)
-	fmt.Printf("DEBUG: MetaData: offsets.Start + MetaData.Length + 4 == %d\n\n", offsets.Start+4+int64(extensions.MetaData.Length))
+	//// XXX
+	PadPrintln(0, "Extension (overall) Metadata:")
+	PadPrintf(2, "MetaData.Length == %d\n", extensions.MetaData.Length)
+	PadPrintf(2, "MetaData.EntryDataStartAddr == %d\n", extensions.MetaData.EntryDataStartAddr)
+	PadPrintf(2, "MetaData.EntryDataCount == %d\n", extensions.MetaData.EntryDataCount)
+	PadPrintln(0, "---")
+	PadPrintf(2, "Caclulated END: %d  (offsets.Start + MetaData.Length + 4)\n", offsets.Start+4+int64(extensions.MetaData.Length))
+	PadPrintln(0, "---")
 
 	// Sanity check
 	// These should sum together to equal the EOF.
@@ -58,24 +64,23 @@ func ReadExtensions(file io.ReadSeeker, offsets *OffsetsUint32) (extensions *Ext
 }
 
 func (extensions *Extensions) Print() {
+	PadPrintln(0)
 	PadPrintln(0, "Extensions:")
 	PadPrintln(2, "Extensions MetaData:")
 	extensions.MetaData.Print()
 	PadPrintln(2, "---")
 	for i, metaData := range extensions.EntriesMetaData {
-		PadPrintf(2, "Extension Entry MetaData [%d]:\n", i)
+		PadPrintf(2, "Extension Entry MetaData [%d]:\n", i+1)
 		metaData.Print()
-		fmt.Println()
-	}
-	PadPrintln(2, "---")
-	for i, entryData := range extensions.EntriesData {
-		PadPrintf(2, "Extension Entry Data [%d]:\n", i)
-		if entryData == nil {
+		PadPrintln(2, "---")
+		if extensions.EntriesData[i] == nil {
 			PadPrintln(4, "[Empty Extension payload]")
 			continue
 		} else {
-			entryData.Print()
+			PadPrintf(2, "Extension Entry payload [%d]:\n", i+1)
+			extensions.EntriesData[i].Print()
 		}
+		PadPrintln(2, "---")
 		PadPrintln(2, "---")
 	}
 }

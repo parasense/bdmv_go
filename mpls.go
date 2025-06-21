@@ -69,8 +69,7 @@ func CalculateEndOffset[U uint8 | uint16 | uint32](file io.ReadSeeker, length U)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get current position: %w", err)
 	}
-	endOffset := currentPos + int64(length)
-	return endOffset, nil
+	return currentPos + int64(length), nil
 }
 
 // ParseMPLS parses an MPLS file and returns the playlist details
@@ -92,6 +91,7 @@ func ParseMPLS(filePath string) (
 	if header, err = ReadMPLSHeader(file); err != nil {
 		return nil, nil, nil, nil, nil, fmt.Errorf("failed to read header: %w", err)
 	}
+	header.Print()
 
 	// AppInfo
 	if appinfo, err = ReadAppInfo(file, &header.AppInfo); err != nil {

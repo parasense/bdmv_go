@@ -35,6 +35,14 @@ func ReadPlayItem(file io.ReadSeeker) (*PlayItem, error) {
 		return nil, fmt.Errorf("failed to read play item length: %w", err)
 	}
 
+	end, err := CalculateEndOffset(file, playItem.Length)
+	if err != nil {
+		return nil, fmt.Errorf("failed calling CalculateEndOffset(): %w", err)
+	}
+
+	// XXX
+	fmt.Printf("DEBUG: PlayItem.Length: %d\n", playItem.Length)
+
 	// The 5 bytes clip name
 	if err := binary.Read(file, binary.BigEndian, &playItem.ClipInformationFileName); err != nil {
 		return nil, fmt.Errorf("failed to read clip info filename: %w", err)
@@ -70,8 +78,6 @@ func ReadPlayItem(file io.ReadSeeker) (*PlayItem, error) {
 	if err := binary.Read(file, binary.BigEndian, &playItem.OUTTime); err != nil {
 		return nil, fmt.Errorf("failed to read OUT time: %w", err)
 	}
-
-	var err error
 
 	// This reads 8 bytes
 	playItem.UserOptions, err = ReadUserOptions(file)
@@ -143,15 +149,27 @@ func ReadPlayItem(file io.ReadSeeker) (*PlayItem, error) {
 		}
 	}
 
+	// XXX
+	pos, _ := ftell(file)
+	fmt.Printf("PlayItem pre-stream pos: %d, (end: %d)\n", pos, end)
+
 	// Read Stream Table (formerly SteamInfo)
 	if playItem.StreamTable, err = ReadStreamTable(file); err != nil {
 		return nil, fmt.Errorf("failed to read StreamTable: %w", err)
 	}
 
+	pos, _ = ftell(file)
+	fmt.Printf("PlayItem post-stream pos: %d, (end: %d)\n", pos, end)
+
 	// XXX - debug opportunity
 	// Print info about file pointer possition in the file.
 	// Print info about the size of the play items.
 	// Allow to see from output any bytes not processed.
+
+	// XXX - DEBUG
+	// BUG found durring WATCHMEN parse.
+	// DELETE ME
+	//playItem.Print()
 
 	return playItem, nil
 }
@@ -176,8 +194,8 @@ func (playItem *PlayItem) Print() {
 	PadPrintf(4, "IsDifferentAudios: %v\n", playItem.IsDifferentAudios)
 	PadPrintf(4, "IsSeamlessAngleChange: %v\n", playItem.IsSeamlessAngleChange)
 	PadPrintf(4, "Angles:\n")
-	for i := uint8(0); i < uint8(len(playItem.Angles)); i++ {
-		PadPrintf(6, "Angle: [%d]:\n", i)
+	for i := range playItem.Angles {
+		PadPrintf(6, "Angle: [%d]:\n", i+1)
 		playItem.Angles[i].Print()
 	}
 	playItem.StreamTable.Print()

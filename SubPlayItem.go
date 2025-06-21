@@ -10,8 +10,8 @@ type SubPlayItem struct {
 	Length                   uint16
 	FileName                 [5]byte
 	Codec                    [4]byte // 27-bits reserve space after
-	ConnectionCondition      uint8   // 4-bits
-	IsMultiClipEntries       bool
+	ConnectionCondition      uint8   // 0b00011110
+	IsMultiClipEntries       bool    // 0b00000001
 	RefToSTCID               uint8
 	INTime                   uint32
 	OUTTime                  uint32
@@ -46,8 +46,8 @@ func ReadSubPlayItem(file io.ReadSeeker) (subPlayItem *SubPlayItem, err error) {
 		return nil, fmt.Errorf("failed to read byte buffer: %w", err)
 	}
 
-	subPlayItem.ConnectionCondition = (buffer & 0x1e) >> 1 // 4-bits, 0b00011110
-	subPlayItem.IsMultiClipEntries = buffer&0x01 != 0      // 1-bit,  0b00000001
+	subPlayItem.ConnectionCondition = (buffer & 0x1e) >> 1 // 0b00011110
+	subPlayItem.IsMultiClipEntries = buffer&0x01 != 0      // 0b00000001
 
 	if err := binary.Read(file, binary.BigEndian, &subPlayItem.INTime); err != nil {
 		return nil, fmt.Errorf("failed to read INTime: %w", err)
@@ -108,7 +108,7 @@ func (subPlayItem *SubPlayItem) Print() {
 	PadPrintf(8, "SyncStartPTS: %d\n", subPlayItem.SyncStartPTS)
 	PadPrintf(8, "NumberOfMultiClipEntries: %d\n", subPlayItem.NumberOfMultiClipEntries)
 	PadPrintf(8, "MultiClipEntries:\n")
-	for i := uint8(0); i < uint8(len(subPlayItem.MultiClipEntries)); i++ {
+	for i := range subPlayItem.MultiClipEntries {
 		PadPrintf(6, "MultiClipEntry [%d]:\n", i)
 		subPlayItem.MultiClipEntries[i].Print()
 	}

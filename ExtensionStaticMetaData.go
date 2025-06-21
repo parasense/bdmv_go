@@ -6,6 +6,7 @@ import (
 	"io"
 )
 
+// ExtensionStaticMetaData implements the ExtensionEntryData interface.
 type ExtensionStaticMetaData struct {
 	Length  uint32
 	Count   uint8
@@ -24,7 +25,31 @@ type StaticMetaDataEntry struct {
 	MaxFALL                      uint16
 }
 
-func (staticMetaData *ExtensionStaticMetaData) Read(file io.ReadSeeker) (err error) {
+func (staticMetaData *ExtensionStaticMetaData) Read(file io.ReadSeeker, offsets *OffsetsUint32, entryMeta *ExtensionEntryMetaData) (err error) {
+
+	PadPrintln(0, "Staticc MetaData Extension:")
+	PadPrintln(2, "---")
+
+	// Calculate the Start/Stop offsets for this extension.
+	offsetStart := offsets.Start + int64(entryMeta.ExtDataStartAddress)
+	offsetStop := offsetStart + int64(entryMeta.ExtDataLength)
+	PadPrintf(2, "offsetStart == %d\n", offsetStart)
+	PadPrintf(2, "offsetStop  == %d\n", offsetStop)
+	PadPrintln(2, "---")
+
+	// Jump to the start offset
+	if _, err := file.Seek(offsetStart, io.SeekStart); err != nil {
+		return fmt.Errorf("failed to seek Entry Offset Start: (%d); error: %w", offsetStart, err)
+	}
+
+	// XXX - DEBUG block
+	PadPrintln(0, "Extensions Entry DEBUG:")
+	PadPrintf(2, "ExtDataType == %d\n", entryMeta.ExtDataType)
+	PadPrintf(2, "ExtDataVersion == %d\n", entryMeta.ExtDataVersion)
+	PadPrintf(2, "ExtDataStartAddress == %d\n", entryMeta.ExtDataStartAddress)
+	PadPrintf(2, "ExtDataLength == %d\n", entryMeta.ExtDataLength)
+	fmt.Println("---")
+	// XXX - EO DEBUG block
 
 	if err := binary.Read(file, binary.BigEndian, &staticMetaData.Length); err != nil {
 		return fmt.Errorf("failed to read ExtensionStaticMetaData.Length: %w", err)
