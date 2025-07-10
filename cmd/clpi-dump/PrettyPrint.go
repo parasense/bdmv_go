@@ -60,7 +60,6 @@ func SequenceInfoPrint(sequenceInfo *clpi.SequenceInfo) {
 	PadPrintln(2, "---")
 }
 
-// XXX - incomplete, needs type assertion switch to print streams.
 func ProgramInfoPrint(pi *clpi.ProgramInfo) {
 	fmt.Println("ProgramInfo:")
 	PadPrintf(2, "Length: %d\n", pi.Length)
@@ -134,10 +133,8 @@ func ProgramInfoPrint(pi *clpi.ProgramInfo) {
 							PadPrintf(12, "[%d] StreamType: %+v\n", k+1, streamType)
 						}
 					}
-
 					PadPrintln(6, "---")
 				}
-
 			}
 			PadPrintln(4, "---")
 		}
