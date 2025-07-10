@@ -30,7 +30,5 @@ func (cpi *ExtensionCPISS) Read(file io.ReadSeeker, offsets *OffsetsUint32, entr
 
 	*cpi = *result
 
-	//fmt.Printf("CPISS: %s\n\n", cpi)
-
 	return nil
 }

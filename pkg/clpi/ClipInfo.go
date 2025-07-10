@@ -101,17 +101,19 @@ func ReadClipInfo(file io.ReadSeeker, offsets *OffsetsUint32) (clipInfo *ClipInf
 }
 
 func (clipInfo *ClipInfo) String() string {
-	return fmt.Sprintf("ClipInfo:\n"+
-		"  Length: %d\n"+
-		"  ClipStreamType: %d\n"+
-		"  ApplicationType: %d\n"+
-		"  IsCC5: %t\n"+
-		"  TSRecordingRate: %d\n"+
-		"  NumberOfSourcePackets: %d\n"+
-		"  TSTypeInfoBlock: %x\n"+
-		"  FollowingClipStreamType: %d\n"+
-		"  FollowingClipInformationFileName: %s\n"+
-		"  FollowingClipCodecIdentifier: %s",
+	return fmt.Sprintf(
+		"ClipInfo{"+
+			"Length: %d, "+
+			"ClipStreamType: %d, "+
+			"ApplicationType: %d, "+
+			"IsCC5: %t, "+
+			"TSRecordingRate: %d, "+
+			"NumberOfSourcePackets: %d, "+
+			"TSTypeInfoBlock: %x, "+
+			"FollowingClipStreamType: %d, "+
+			"FollowingClipInformationFileName: %s, "+
+			"FollowingClipCodecIdentifier: %s,"+
+			"}",
 		clipInfo.Length,
 		clipInfo.ClipStreamType,
 		clipInfo.ApplicationType,

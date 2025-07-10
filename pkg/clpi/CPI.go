@@ -44,13 +44,7 @@ func ReadCPI(file io.ReadSeeker, offsets *OffsetsUint32) (cpi *CPI, err error) {
 		return nil, nil
 	}
 
-	// XXX
-	//fmt.Printf("CPI offsets: %+v\n", offsets)
-
 	cpi = &CPI{}
-
-	// XXX
-	//log.Printf("ReadCPI\n")
 
 	// Jump to start address
 	if _, err := file.Seek(offsets.Start, io.SeekStart); err != nil {
@@ -61,7 +55,6 @@ func ReadCPI(file io.ReadSeeker, offsets *OffsetsUint32) (cpi *CPI, err error) {
 		return nil, err
 	}
 
-	// XXX - IMPORTANT
 	// Testing on real CLPI files has show that sometimes the length is zero!
 	// That means parsing might need to stop here.
 	if cpi.Length == 0 {
@@ -94,17 +87,10 @@ func ReadCPI(file io.ReadSeeker, offsets *OffsetsUint32) (cpi *CPI, err error) {
 		cpi.StreamPIDEntries[i], err = ReadStreamPIDEntry(file)
 	}
 
-	// XXX
-	//pos, _ := ftell(file)
-	//fmt.Printf("POS: %d\n", pos)
-
 	for i, streamPID := range cpi.StreamPIDEntries {
 
 		// This is where the jump to the "EPMapStreamStartAddr" happens.
 		EPMapForOneStreamPIDStartAddress := offsets.Start + 6 + int64(streamPID.EPMapStreamStartAddr)
-
-		// XXX
-		//fmt.Printf("EPMapForOneStreamPIDStartAddress: %d\n", EPMapForOneStreamPIDStartAddress)
 
 		if _, err := file.Seek(EPMapForOneStreamPIDStartAddress, io.SeekStart); err != nil {
 			return nil, err
@@ -115,20 +101,13 @@ func ReadCPI(file io.ReadSeeker, offsets *OffsetsUint32) (cpi *CPI, err error) {
 			return nil, err
 		}
 
-		// XXX
-		//fmt.Printf("EPFineTableStartAddress: %d\n", cpi.StreamPIDEntries[i].EPFineTableStartAddress)
-
 		cpi.StreamPIDEntries[i].CourseEntries = make([]*CourseEntry, streamPID.NumberOfEPCoarseEntries)
 		for j := range streamPID.CourseEntries {
 			cpi.StreamPIDEntries[i].CourseEntries[j], err = ReadStreamPIDCourseEntry(file)
 			if err != nil {
 				return nil, err
 			}
-			//fmt.Printf("CourseEntry[%d]: %+v\n", j, cpi.StreamPIDEntries[i].CourseEntries[j])
 		}
-
-		// XXX
-		//fmt.Printf("fine start: %d\n", EPMapForOneStreamPIDStartAddress+int64(cpi.StreamPIDEntries[i].EPFineTableStartAddress))
 
 		// Jump to the start address of the fine entries.
 		if _, err := file.Seek(
@@ -143,15 +122,10 @@ func ReadCPI(file io.ReadSeeker, offsets *OffsetsUint32) (cpi *CPI, err error) {
 			if err != nil {
 				return nil, err
 			}
-			//fmt.Printf("FineEntry[%d]: %+v\n", j, cpi.StreamPIDEntries[i].FineEntries[j])
 		}
 	}
 
-	// XXX
-	//pos2, _ := ftell(file)
-	//fmt.Printf("POS2: %d\n", pos2)
 	return cpi, nil
-
 }
 
 func ReadStreamPIDEntry(file io.ReadSeeker) (entry *StreamPIDEntry, err error) {
@@ -238,8 +212,6 @@ func ReadStreamPIDFineEntry(file io.ReadSeeker) (fe *FineEntry, err error) {
 	// 0b00000000_00000001_11111111_11111111
 	//                   ^ ^^^^^^^^ ^^^^^^^^
 	fe.SPNEPFine = (fineBuf & 0x0001FFFF)
-
-	//fmt.Printf("FineEntry[%d]: %+v\n", j, cpi.StreamPIDEntries[i].FineEntries[j])
 
 	return fe, err
 }

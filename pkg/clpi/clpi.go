@@ -4,21 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 )
-
-func ftell(file io.ReadSeeker) (int64, error) {
-	return file.Seek(0, io.SeekCurrent)
-}
-
-func PadPrintf(indent int, format string, args ...any) {
-	fmt.Printf(strings.Repeat(" ", indent)+format, args...)
-}
-
-func PadPrintln(indent int, args ...any) {
-	fmt.Print(strings.Repeat(" ", indent))
-	fmt.Println(args...)
-}
 
 func CalculateEndOffset[U uint8 | uint16 | uint32](file io.ReadSeeker, length U) (int64, error) {
 	currentPos, err := file.Seek(0, io.SeekCurrent)

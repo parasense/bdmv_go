@@ -27,13 +27,7 @@ func ReadClipMarks(file io.ReadSeeker, offsets *OffsetsUint32) (clipMarks *ClipM
 		return nil, nil
 	}
 
-	// XXX
-	//fmt.Printf("ClipMarks offsets: %+v\n", offsets)
-
 	clipMarks = &ClipMarks{}
-
-	// XXX
-	//log.Printf("ReadClipMarks\n")
 
 	// Jump to start address
 	if _, err := file.Seek(offsets.Start, io.SeekStart); err != nil {
@@ -43,9 +37,7 @@ func ReadClipMarks(file io.ReadSeeker, offsets *OffsetsUint32) (clipMarks *ClipM
 	if err := binary.Read(file, binary.BigEndian, &clipMarks.Length); err != nil {
 		return nil, err
 	}
-	fmt.Printf("clipMarks.Length: %d\n", clipMarks.Length)
 
-	// XXX - IMPORTANT
 	// Testing on real CLPI files has show that sometimes the length is zero!
 	// That means parsing might need to stop here.
 	if clipMarks.Length == 0 {
@@ -55,7 +47,6 @@ func ReadClipMarks(file io.ReadSeeker, offsets *OffsetsUint32) (clipMarks *ClipM
 	if err := binary.Read(file, binary.BigEndian, &clipMarks.NumberOfClipMarks); err != nil {
 		return nil, err
 	}
-	fmt.Printf("clipMarks.NumberOfClipMarks: %d\n", clipMarks.NumberOfClipMarks)
 
 	// XXX - This is all very expeerimental bellow
 	clipMarks.MarkEntries = make([]*ClipMarkEntry, clipMarks.NumberOfClipMarks)

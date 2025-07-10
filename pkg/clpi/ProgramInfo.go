@@ -15,8 +15,6 @@ type ProgramInfo struct {
 func ReadProgramInfo(file io.ReadSeeker, offsets *OffsetsUint32) (programInfo *ProgramInfo, err error) {
 	programInfo = &ProgramInfo{}
 
-	//fmt.Printf("ReadProgramInfo: offsets: %+v\n", offsets)
-
 	// Jump to start address
 	if _, err := file.Seek(offsets.Start, io.SeekStart); err != nil {
 		return nil, fmt.Errorf("Failed to Seek offset.Start: %w", err)
@@ -25,7 +23,6 @@ func ReadProgramInfo(file io.ReadSeeker, offsets *OffsetsUint32) (programInfo *P
 	if err := binary.Read(file, binary.BigEndian, &programInfo.Length); err != nil {
 		return nil, fmt.Errorf("Failed to read Length: %w", err)
 	}
-	//fmt.Printf("ReadProgramInfo: programInfo.Length: %+v\n", programInfo.Length)
 
 	// 1-byte reserve space
 	if _, err := file.Seek(1, io.SeekCurrent); err != nil {
@@ -35,17 +32,13 @@ func ReadProgramInfo(file io.ReadSeeker, offsets *OffsetsUint32) (programInfo *P
 	if err := binary.Read(file, binary.BigEndian, &programInfo.NumberOfPrograms); err != nil {
 		return nil, fmt.Errorf("Error reading NumberOfPrograms: %w", err)
 	}
-	//fmt.Printf("ReadProgramInfo: programInfo.NumberOfPrograms: %+v\n", programInfo.NumberOfPrograms)
 
 	programInfo.Programs = make([]*Program, programInfo.NumberOfPrograms)
-
 	for i := range programInfo.Programs {
 		if programInfo.Programs[i], err = ReadProgram(file); err != nil {
 			return nil, fmt.Errorf("Failed in call to ReadProgram(): %w", err)
 		}
 	}
-
-	//fmt.Printf("ReadProgramInfo: programInfo: %+v\n", programInfo)
 
 	return programInfo, nil
 }
@@ -74,17 +67,14 @@ func ReadProgram(file io.ReadSeeker) (p *Program, err error) {
 	if err := binary.Read(file, binary.BigEndian, &p.SPNProgramSequenceStart); err != nil {
 		return nil, fmt.Errorf("Error reading SPNProgramSequenceStart: %w", err)
 	}
-	//fmt.Printf("SPNProgramSequenceStart: %d\n", p.SPNProgramSequenceStart)
 
 	if err := binary.Read(file, binary.BigEndian, &p.ProgramMapPID); err != nil {
 		return nil, fmt.Errorf("Error reading ProgramMapPID: %w", err)
 	}
-	//fmt.Printf("ProgramMapPID: %d\n", p.ProgramMapPID)
 
 	if err := binary.Read(file, binary.BigEndian, &p.NumberOfStreamsInPS); err != nil {
 		return nil, fmt.Errorf("Error reading NumberOfStreamsInPS: %w", err)
 	}
-	//fmt.Printf("ProgramMapPID: %d\n", p.NumberOfStreamsInPS)
 
 	// 1-byte reserve space
 	if _, err := file.Seek(1, io.SeekCurrent); err != nil {
@@ -97,9 +87,7 @@ func ReadProgram(file io.ReadSeeker) (p *Program, err error) {
 		p.ProgramStreams[i], err = ReadProgramStream(file)
 		if err != nil {
 			return nil, fmt.Errorf("Error returned by ReadProgramStream() %w", err)
-
 		}
-
 	}
 
 	return p, nil
@@ -135,7 +123,6 @@ func (ps *ProgramStream) String() string {
 
 type StreamCodingInfo interface {
 	Read(io.ReadSeeker) error
-	//String() string
 	SetLength(uint8)
 	SetStreamCodingType(StreamCodingType)
 	SetISRCode([12]byte)
@@ -159,7 +146,6 @@ func ReadProgramStream(file io.ReadSeeker) (p *ProgramStream, err error) {
 	if err := binary.Read(file, binary.BigEndian, &streamCodingType); err != nil {
 		return nil, err
 	}
-	//fmt.Printf("streamCodingType: %d\n", streamCodingType)
 
 	streamCodingInfo := NewStreamCodingInfo(streamCodingType)
 	if streamCodingInfo == nil {
