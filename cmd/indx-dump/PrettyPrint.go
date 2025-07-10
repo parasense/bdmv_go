@@ -19,12 +19,12 @@ func HeaderPrint(header *indx.INDXHeader) {
 func AppInfoPrint(appinfo *indx.AppInfo) {
 	PadPrintln(0, "AppInfo:")
 	PadPrintf(2, "Length: %d\n", appinfo.Length)
-	PadPrintf(2, "InitialOutputModePreference: %d\n", appinfo.InitialOutputModePreference)
+	PadPrintf(2, "InitialOutputModePreference: %t\n", appinfo.InitialOutputModePreference)
 	PadPrintf(2, "SSContentExistFlag: %t\n", appinfo.SSContentExistFlag)
 	PadPrintf(2, "InitialDynamicRangeType: %v\n", appinfo.InitialDynamicRangeType)
 	PadPrintf(2, "VideoFormat: %v\n", appinfo.VideoFormat)
 	PadPrintf(2, "FrameRate: %v\n", appinfo.FrameRate)
-	PadPrintf(2, "UserData: %v\n", appinfo.UserData)
+	PadPrintf(2, "UserData: %s\n", appinfo.UserData[:])
 	PadPrintln(2, "---")
 }
 

@@ -14,6 +14,9 @@ type Title struct {
 	RefToBDJObjectID   [5]byte // 40-bits
 }
 
+// ReadTitle reads a Title structure from the provided io.ReadSeeker.
+// It returns a pointer to the Title and an error if any.
+// XXX - This will probably need to become an interface thanks to AccessType
 func ReadTitle(file io.ReadSeeker) (*Title, error) {
 	title := &Title{}
 
@@ -22,6 +25,8 @@ func ReadTitle(file io.ReadSeeker) (*Title, error) {
 		return nil, fmt.Errorf("failed to read buffer: %w", err)
 	}
 	title.ObjectType = (buffer & 0xC0) >> 6
+
+	// XXX - This is only for Titles that are not TopMenu or FirstPlayback
 	title.AccesType = (buffer & 0x30) >> 4
 
 	// skip 3 byte reserve space

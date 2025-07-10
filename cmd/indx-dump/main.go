@@ -32,9 +32,6 @@ func main() {
 
 	PadPrintf(0, "INDX File: %s\n", indxPath)
 
-	//PadPrintf(0, "Header: %s\n", header)
-	//PadPrintf(0, "AppInfo: %s\n", appinfo)
-	//PadPrintf(0, "Indexes: %s\n", indexes)
 	if header.Extensions.Start != 0 && header.Extensions.Stop != 0 {
 		PadPrintf(0, "Extensions: %s\n", extData)
 	}

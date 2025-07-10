@@ -12,6 +12,7 @@ import "fmt"
 // CharacterCodeType is the text stream character (symbol/glyph) encoding standard.
 type CharacterCodeType uint8
 
+// xxx- please actualyl use CharacterCodeType instead of uint8
 const (
 	TEXT_CHAR_CODE_UTF8          uint8 = 0x01 // Unicode 8-bit
 	TEXT_CHAR_CODE_UTF16BE       uint8 = 0x02 // Unicode 16-bit Big Endian

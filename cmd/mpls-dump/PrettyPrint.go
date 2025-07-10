@@ -299,7 +299,6 @@ func SecondaryAudioAttributesPrint(attr *mpls.SecondaryAudioAttributes) {
 	eng, nat := mpls.LanguageCode(attr.LanguageCode)
 	PadPrintf(12, "LanguageCode: %s [%s, %s]\n", attr.LanguageCode, eng, nat)
 	PadPrintf(12, "NumberOfPrimaryAudioRef: %+v\n", attr.NumberOfPrimaryAudioRef)
-
 }
 
 // SecondaryVideoAttributesPrint prints the attributes of a SecondaryVideoAttributes.

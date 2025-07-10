@@ -1,5 +1,7 @@
 package mpls
 
+type LanguageCodeType [3]byte
+
 // LanguageInfo holds the English and native names for a language.
 type LanguageInfo struct {
 	EnglishName string
