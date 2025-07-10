@@ -43,8 +43,14 @@ func ReadMetaData(file io.ReadSeeker) (metaData *ExtensionsMetaData, err error) 
 }
 
 func (e *ExtensionsMetaData) String() string {
-	return fmt.Sprintf("ExtensionsMetaData{Length: %d, EntryDataStartAddr: %d, EntryDataCount: %d}",
+	return fmt.Sprintf(
+		"ExtensionsMetaData{"+
+			"Length: %d, "+
+			"EntryDataStartAddr: %d, "+
+			"EntryDataCount: %d, "+
+			"}",
 		e.Length,
 		e.EntryDataStartAddr,
-		e.EntryDataCount)
+		e.EntryDataCount,
+	)
 }

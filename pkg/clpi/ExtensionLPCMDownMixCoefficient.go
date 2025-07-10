@@ -37,7 +37,13 @@ func (dmc *ExtensionLPCMDownMixCoefficient) Read(file io.ReadSeeker, offsets *Of
 
 func (dmc *ExtensionLPCMDownMixCoefficient) String() string {
 	return fmt.Sprintf(
-		"{Length: %d, NumberOfPoints: %d, PointEntries: %s, }",
-		dmc.Length, dmc.NumberOfPoints, dmc.PointEntries,
+		"ExtensionLPCMDownMixCoefficient{"+
+			"Length: %d, "+
+			"NumberOfPoints: %d, "+
+			"PointEntries: %s, "+
+			"}",
+		dmc.Length,
+		dmc.NumberOfPoints,
+		dmc.PointEntries,
 	)
 }

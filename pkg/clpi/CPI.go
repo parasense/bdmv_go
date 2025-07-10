@@ -146,9 +146,11 @@ func ReadStreamPIDEntry(file io.ReadSeeker) (entry *StreamPIDEntry, err error) {
 	}
 
 	// 0b00111100_00000000_00000000_00000000
+	//     ^^^^
 	entry.EPStreamType = uint8((buf32 & 0x3C000000) >> 26)
 
 	// 0b00000011_11111111_11111100_00000000
+	//         ^^ ^^^^^^^^ ^^^^^^
 	entry.NumberOfEPCoarseEntries = uint16((buf32 & 0x03FFC000) >> 10)
 
 	var buf8 uint8
@@ -224,8 +226,10 @@ func (cpi *CPI) String() string {
 			"NumberOfStreamPIDEntries: %d, "+
 			"StreamPIDEntries: %+v, "+
 			"}",
-		cpi.Length, cpi.CPIType,
-		cpi.NumberOfStreamPIDEntries, cpi.StreamPIDEntries,
+		cpi.Length,
+		cpi.CPIType,
+		cpi.NumberOfStreamPIDEntries,
+		cpi.StreamPIDEntries,
 	)
 }
 
@@ -238,13 +242,17 @@ func (entry *StreamPIDEntry) String() string {
 			"NumberOfEPFineEntries: %d, "+
 			"EPMapStreamStartAddr: %d, "+
 			"EPFineTableStartAddress: %d, "+
-			"CourseEntries: %+v,"+
-			"FineEntries: %+v,"+
+			"CourseEntries: %+v, "+
+			"FineEntries: %+v, "+
 			"}",
-		entry.StreamPID, entry.EPStreamType,
-		entry.NumberOfEPCoarseEntries, entry.NumberOfEPFineEntries,
-		entry.EPMapStreamStartAddr, entry.EPFineTableStartAddress,
-		entry.CourseEntries, entry.FineEntries,
+		entry.StreamPID,
+		entry.EPStreamType,
+		entry.NumberOfEPCoarseEntries,
+		entry.NumberOfEPFineEntries,
+		entry.EPMapStreamStartAddr,
+		entry.EPFineTableStartAddress,
+		entry.CourseEntries,
+		entry.FineEntries,
 	)
 }
 
@@ -253,7 +261,8 @@ func (ce *CourseEntry) String() string {
 		"CourseEntry{"+
 			"RefToEPFineID: %d, "+
 			"PTSEPCoarse: %d, "+
-			"SPNEPCoarse: %d }",
+			"SPNEPCoarse: %d, "+
+			"}",
 		ce.RefToEPFineID,
 		ce.PTSEPCoarse,
 		ce.SPNEPCoarse,
@@ -266,7 +275,8 @@ func (fe *FineEntry) String() string {
 			"IsAngleChangePoint: %t, "+
 			"IEndPositionOffset: %d, "+
 			"PTSEPFine: %d, "+
-			"SPNEPFine: %d }",
+			"SPNEPFine: %d, "+
+			"}",
 		fe.IsAngleChangePoint,
 		fe.IEndPositionOffset,
 		fe.PTSEPFine,

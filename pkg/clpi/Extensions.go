@@ -54,8 +54,14 @@ func ReadExtensions(file io.ReadSeeker, offsets *OffsetsUint32) (extensions *Ext
 }
 
 func (e *Extensions) String() string {
-	return fmt.Sprintf("Extensions{MetaData: %s, EntriesMetaData: %d, EntriesData: %d}",
+	return fmt.Sprintf(
+		"Extensions{"+
+			"MetaData: %s, "+
+			"EntriesMetaData: %d, "+
+			"EntriesData: %d, "+
+			"}",
 		e.MetaData,
 		len(e.EntriesMetaData),
-		len(e.EntriesData))
+		len(e.EntriesData),
+	)
 }

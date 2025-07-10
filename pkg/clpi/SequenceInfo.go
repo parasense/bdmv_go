@@ -102,29 +102,44 @@ func ReadSTCSequences(file io.ReadSeeker) (stcSequence *STCSequence, err error) 
 }
 
 func (sequenceInfo *SequenceInfo) String() string {
-	return "SequenceInfo{" +
-		"Length: " + fmt.Sprintf("%d", sequenceInfo.Length) +
-		", NumberOfATCSequences: " + fmt.Sprintf("%d", sequenceInfo.NumberOfATCSequences) +
-		", ATCSequences: " + fmt.Sprintf("%v", sequenceInfo.ATCSequences) +
-		"}"
+	return fmt.Sprintf(
+		"SequenceInfo{"+
+			"Length: %d, "+
+			"NumberOfATCSequences: %d, "+
+			"ATCSequences: %s, "+
+			"}",
+		sequenceInfo.Length,
+		sequenceInfo.NumberOfATCSequences,
+		sequenceInfo.ATCSequences,
+	)
 }
 
 func (atcSequence *ATCSequence) String() string {
-	return "ATCSequence{" +
-		"SPNATCStart: " + fmt.Sprintf("%d", atcSequence.SPNATCStart) +
-		", NumberOfSTCSequences: " + fmt.Sprintf("%d", atcSequence.NumberOfSTCSequences) +
-		", OffsetSTCID: " + fmt.Sprintf("%d", atcSequence.OffsetSTCID) +
-		", STCSequences: " + fmt.Sprintf("%v", atcSequence.STCSequences) +
-		"}"
+	return fmt.Sprintf(
+		"ATCSequence{"+
+			"SPNATCStart: %d, "+
+			"NumberOfSTCSequences: %d, "+
+			"OffsetSTCID: %d, "+
+			"STCSequences: %s, "+
+			"}",
+		atcSequence.SPNATCStart,
+		atcSequence.NumberOfSTCSequences,
+		atcSequence.OffsetSTCID,
+		atcSequence.STCSequences,
+	)
 }
 
 func (stcSequence *STCSequence) String() string {
 	return fmt.Sprintf(
-		"STCSequence{PCRPID: %d, "+
+		"STCSequence{"+
+			"PCRPID: %d, "+
 			"SPNSTCStart: %d, "+
 			"PresentationStartTime: %d, P"+
-			"resentationEndTime: %d}",
-		stcSequence.PCRPID, stcSequence.SPNSTCStart,
-		stcSequence.PresentationStartTime, stcSequence.PresentationEndTime,
+			"resentationEndTime: %d, "+
+			"}",
+		stcSequence.PCRPID,
+		stcSequence.SPNSTCStart,
+		stcSequence.PresentationStartTime,
+		stcSequence.PresentationEndTime,
 	)
 }

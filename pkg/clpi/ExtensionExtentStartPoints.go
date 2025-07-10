@@ -47,11 +47,17 @@ func (esp *ExtensionExtentStartPoints) Read(file io.ReadSeeker, offsets *Offsets
 
 func (esp *ExtensionExtentStartPoints) String() string {
 	return fmt.Sprintf(
-		"{Length: %d, NumberOfPoints: %d, PointEntries: %s, }",
-		esp.Length, esp.NumberOfPoints, esp.PointEntries,
+		"ExtensionExtentStartPoints{"+
+			"Length: %d, "+
+			"NumberOfPoints: %d, "+
+			"PointEntries: %s, "+
+			"}",
+		esp.Length,
+		esp.NumberOfPoints,
+		esp.PointEntries,
 	)
 }
 
 func (pnt *PointEntry) String() string {
-	return fmt.Sprintf("{Point: %d}", pnt.Point)
+	return fmt.Sprintf("PointEntry{Point: %d}", pnt.Point)
 }

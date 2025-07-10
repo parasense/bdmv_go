@@ -48,14 +48,42 @@ func ReadClipMarks(file io.ReadSeeker, offsets *OffsetsUint32) (clipMarks *ClipM
 		return nil, err
 	}
 
-	// XXX - This is all very expeerimental bellow
 	clipMarks.MarkEntries = make([]*ClipMarkEntry, clipMarks.NumberOfClipMarks)
 	for i := range clipMarks.MarkEntries {
-		clipMarks.MarkEntries[i] = &ClipMarkEntry{}
+		if clipMarks.MarkEntries[i], err = ReadClipMarkEntry(file); err != nil {
+			return nil, err
+		}
 		fmt.Printf("DEBUG: [%d] MarkEntry: %+v\n", i, clipMarks.MarkEntries[i])
 	}
 
 	return clipMarks, nil
+}
+
+func ReadClipMarkEntry(file io.ReadSeeker) (clipMarkEntry *ClipMarkEntry, err error) {
+
+	clipMarkEntry = &ClipMarkEntry{}
+
+	if err := binary.Read(file, binary.BigEndian, &clipMarkEntry.MarkType); err != nil {
+		return nil, err
+	}
+
+	if err := binary.Read(file, binary.BigEndian, &clipMarkEntry.MarkPID); err != nil {
+		return nil, err
+	}
+
+	if err := binary.Read(file, binary.BigEndian, &clipMarkEntry.MarkTimeStamp); err != nil {
+		return nil, err
+	}
+
+	if err := binary.Read(file, binary.BigEndian, &clipMarkEntry.MarkEntryPoint); err != nil {
+		return nil, err
+	}
+
+	if err := binary.Read(file, binary.BigEndian, &clipMarkEntry.MarkDuration); err != nil {
+		return nil, err
+	}
+
+	return clipMarkEntry, err
 }
 
 func (clipMarks *ClipMarks) String() string {
@@ -74,7 +102,13 @@ func (clipMarks *ClipMarks) String() string {
 
 func (entry *ClipMarkEntry) String() string {
 	return fmt.Sprintf(
-		"ClipMarkEntry{MarkType: %d, MarkPID: %d, MarkTimeStamp: %d, MarkEntryPoint: %d, MarkDuration: %d}",
+		"ClipMarkEntry{"+
+			"MarkType: %d, "+
+			"MarkPID: %d, "+
+			"MarkTimeStamp: %d, "+
+			"MarkEntryPoint: %d, "+
+			"MarkDuration: %d, "+
+			"}",
 		entry.MarkType,
 		entry.MarkPID,
 		entry.MarkTimeStamp,

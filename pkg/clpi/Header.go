@@ -100,18 +100,24 @@ func (offsets *OffsetsUint32) String() string {
 
 // String returns a string representation of the CLPIHeader.
 func (header *CLPIHeader) String() string {
-	return fmt.Sprintf("CLPIHeader{\n"+
-		"  TypeIndicator: %s\n"+
-		"  VersionNumber: %s\n"+
-		"  ClipInfo: %s\n"+
-		"  SequenceInfo: %s\n"+
-		"  ProgramInfo: %s\n"+
-		"  CPI: %s\n"+
-		"  ClipMark: %s\n"+
-		"  Extensions: %s\n"+
-		"}",
-		header.TypeIndicator, header.VersionNumber,
-		header.ClipInfo, header.SequenceInfo,
-		header.ProgramInfo, header.CPI,
-		header.ClipMarks, header.Extensions)
+	return fmt.Sprintf(
+		"CLPIHeader{"+
+			"TypeIndicator: %s, "+
+			"VersionNumber: %s, "+
+			"ClipInfo: %s, "+
+			"SequenceInfo: %s, "+
+			"ProgramInfo: %s, "+
+			"CPI: %s, "+
+			"ClipMark: %s, "+
+			"Extensions: %s, "+
+			"}",
+		header.TypeIndicator,
+		header.VersionNumber,
+		header.ClipInfo,
+		header.SequenceInfo,
+		header.ProgramInfo,
+		header.CPI,
+		header.ClipMarks,
+		header.Extensions,
+	)
 }

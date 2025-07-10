@@ -48,9 +48,16 @@ func ReadExtensionsEntriesMetaData(file io.ReadSeeker, offsets *OffsetsUint32, m
 }
 
 func (e *ExtensionEntryMetaData) String() string {
-	return fmt.Sprintf("ExtensionEntryMetaData{ExtDataType: %d, ExtDataVersion: %d, ExtDataStartAddress: %d, ExtDataLength: %d}",
+	return fmt.Sprintf(
+		"ExtensionEntryMetaData{"+
+			"ExtDataType: %d, "+
+			"ExtDataVersion: %d, "+
+			"ExtDataStartAddress: %d, "+
+			"ExtDataLength: %d, "+
+			"}",
 		e.ExtDataType,
 		e.ExtDataVersion,
 		e.ExtDataStartAddress,
-		e.ExtDataLength)
+		e.ExtDataLength,
+	)
 }

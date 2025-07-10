@@ -381,10 +381,15 @@ func (sci *StreamCodingInfoH264) String() string {
 			"FrameRate: %d, "+
 			"VideoAspectRatio: %d, "+
 			"OCFlag: %t, "+
-			"ISRCode: %s}",
-		sci.Length, sci.StreamCodingType,
-		sci.VideoFormat, sci.FrameRate,
-		sci.VideoAspectRatio, sci.OCFlag, sci.ISRCode,
+			"ISRCode: %s, "+
+			"}",
+		sci.Length,
+		sci.StreamCodingType,
+		sci.VideoFormat,
+		sci.FrameRate,
+		sci.VideoAspectRatio,
+		sci.OCFlag,
+		sci.ISRCode,
 	)
 }
 
@@ -400,12 +405,18 @@ func (sci *StreamCodingInfoH265) String() string {
 			"DynamicRangeType: %d, "+
 			"ColorSpace: %d, "+
 			"HDRPlusFlag: %t, "+
-			"ISRCode: %s}",
-		sci.Length, sci.StreamCodingType,
-		sci.VideoFormat, sci.FrameRate,
-		sci.VideoAspectRatio, sci.OCFlag,
-		sci.DynamicRangeType, sci.ColorSpace,
-		sci.HDRPlusFlag, sci.ISRCode,
+			"ISRCode: %s, "+
+			"}",
+		sci.Length,
+		sci.StreamCodingType,
+		sci.VideoFormat,
+		sci.FrameRate,
+		sci.VideoAspectRatio,
+		sci.OCFlag,
+		sci.DynamicRangeType,
+		sci.ColorSpace,
+		sci.HDRPlusFlag,
+		sci.ISRCode,
 	)
 }
 
@@ -417,10 +428,14 @@ func (sci *StreamCodingInfoAudio) String() string {
 			"AudioFormat: %d, "+
 			"FrameRate: %d, "+
 			"LanguageCode: %s, "+
-			"ISRCode: %s}",
-		sci.Length, sci.StreamCodingType,
-		sci.AudioFormat, sci.SampleRate,
-		sci.LanguageCode[:], sci.ISRCode,
+			"ISRCode: %s, "+
+			"}",
+		sci.Length,
+		sci.StreamCodingType,
+		sci.AudioFormat,
+		sci.SampleRate,
+		sci.LanguageCode[:],
+		sci.ISRCode,
 	)
 }
 
@@ -430,9 +445,12 @@ func (sci *StreamCodingTypePG) String() string {
 			"Length: %d, "+
 			"StreamCodingType: %d, "+
 			"LanguageCode: %s, "+
-			"ISRCode: %s}",
-		sci.Length, sci.StreamCodingType,
-		sci.LanguageCode[:], sci.ISRCode,
+			"ISRCode: %s, "+
+			"}",
+		sci.Length,
+		sci.StreamCodingType,
+		sci.LanguageCode[:],
+		sci.ISRCode,
 	)
 }
 
@@ -442,9 +460,12 @@ func (sci *StreamCodingTypeIG) String() string {
 			"Length: %d, "+
 			"StreamCodingType: %d, "+
 			"LanguageCode: %s, "+
-			"ISRCode: %s}",
-		sci.Length, sci.StreamCodingType,
-		sci.LanguageCode[:], sci.ISRCode,
+			"ISRCode: %s, "+
+			"}",
+		sci.Length,
+		sci.StreamCodingType,
+		sci.LanguageCode[:],
+		sci.ISRCode,
 	)
 }
 
@@ -455,8 +476,12 @@ func (sci *StreamCodingTypeText) String() string {
 			"StreamCodingType: %d, "+
 			"LanguageCode: %s, "+
 			"CharacterCode: %d, "+
-			"ISRCode: %s}",
-		sci.Length, sci.StreamCodingType,
-		sci.LanguageCode[:], sci.CharacterCode, sci.ISRCode,
+			"ISRCode: %s, "+
+			"}",
+		sci.Length,
+		sci.StreamCodingType,
+		sci.LanguageCode[:],
+		sci.CharacterCode,
+		sci.ISRCode,
 	)
 }

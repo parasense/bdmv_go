@@ -112,7 +112,7 @@ func (clipInfo *ClipInfo) String() string {
 			"TSTypeInfoBlock: %x, "+
 			"FollowingClipStreamType: %d, "+
 			"FollowingClipInformationFileName: %s, "+
-			"FollowingClipCodecIdentifier: %s,"+
+			"FollowingClipCodecIdentifier: %s, "+
 			"}",
 		clipInfo.Length,
 		clipInfo.ClipStreamType,
