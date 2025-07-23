@@ -1,0 +1,27 @@
+<!-- "-//DVB//DTD Font Directory 1.0//EN" -->
+
+<!ELEMENT fontdirectory (font+)>
+	<!-- a font definition -->
+
+<!ELEMENT font (name,fontformat,filename,style*,size?)>
+	<!-- filename of the font file.
+	Because the font directory is per directory, this should
+	not contain any directories, but just be a file in that
+	directory -->
+
+<!ELEMENT filename (#PCDATA)>
+	<!-- font format, e.g. "PFR" -->
+
+<!ELEMENT fontformat (#PCDATA)>
+	<!-- symbolic name of the font -->
+
+<!ELEMENT style (#PCDATA)>
+	<!-- font style -->
+
+<!ELEMENT name (#PCDATA)>
+
+<!ELEMENT size EMPTY>
+<!ATTLIST size
+	min CDATA "0"
+	max CDATA "maxint"
+>
